@@ -1,5 +1,5 @@
 # Vetuscoin
-*English*: C++ Bitcoin-like blockchain prototype with blockchain emulation.
+*English*: C++ Bitcoin-like blockchain prototype with blockchain emulation.<br>
 *Russian*: Прототип блокчейна Bitcoin на C++ с эмуляцией.
 ## Roadmap
 1. ECDSA encryption, seckey, pubkey, address generation.
