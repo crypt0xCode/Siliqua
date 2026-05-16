@@ -2,11 +2,8 @@
 #include <secp256k1.h>
 #include <memory>
 #include <stdexcept>
-#include <windows.h>
-#include <bcrypt.h>
 #include "logger.h"
 #include "utils.h"
-#pragma comment(lib, "bcrypt.lib")
 
 class Secp256k1Context {
 public:
