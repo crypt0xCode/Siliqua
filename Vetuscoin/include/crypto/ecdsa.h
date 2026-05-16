@@ -18,7 +18,7 @@ namespace crypto {
      * @param input     out-input string.
      */
     inline void hash_sha256(std::string& input) {
-        Logger::instance().debug("Prepare hash256 for string {}.", input);
+        Logger::instance().debug("hash_sha256: Prepare hash256 for string {}.", input);
         picosha2::hash256_hex_string(input, input);
     }
 
@@ -29,8 +29,37 @@ namespace crypto {
      */
     template <typename StringIter, typename VectorContainer>
     void hash_sha256(StringIter str_begin, StringIter str_end, VectorContainer& hash_array) {
-        Logger::instance().debug("Prepare hash256 for hash array.");
+        Logger::instance().debug("hash_sha256: Prepare hash256 for hash array.");
         picosha2::hash256(str_begin, str_end, hash_array);
+    }
+
+    /* @brief   Compute SHA-256 of a fixed-size array (any size, but output is always 32 bytes).
+     * @param   input   array of bytes (size known at compile time)
+     * @param   output  array of exactly 32 bytes where hash will be written
+     */
+    template <size_t N>
+    inline void hash_sha256(const std::array<uint8_t, N>& input, std::array<uint8_t, 32>& output) {
+        Logger::instance().debug("hash_sha256: Prepare hash256 for fixed-size array of size {}.", N);
+        picosha2::hash256(input.begin(), input.end(), output.begin(), output.end());
+    }
+
+    /* @brief   Compute SHA-256 of a byte vector, store result in a fixed-size array.
+     * @param   input   vector of bytes to hash.
+     * @param   output  array of exactly 32 bytes where hash will be written.
+     */
+    inline void hash_sha256(const std::vector<uint8_t>& input, std::array<uint8_t, 32>& output) {
+        Logger::instance().debug("hash_sha256: Prepare hash256 for byte vector of size {}.", input.size());
+        picosha2::hash256(input.begin(), input.end(), output.begin(), output.end());
+    }
+
+    /* @brief   Compute SHA-256 of raw bytes.
+     * @param   data    pointer to bytes.
+     * @param   len     number of bytes.
+     * @param   output  array of exactly 32 bytes where hash will be written.
+     */
+    inline void hash_sha256(const uint8_t* data, size_t len, std::array<uint8_t, 32>& output) {
+        Logger::instance().debug("hash_sha256: Prepare hash256 for raw bytes of size {}.", len);
+        picosha2::hash256(data, data + len, output.begin(), output.end());
     }
 
     /* @brief              Encrypt string by double SHA256.
@@ -41,6 +70,27 @@ namespace crypto {
         hash_sha256(input);
     }
 
+    /* @brief   Compute double SHA-256 of a byte vector.
+     * @param   input   vector of bytes
+     * @param   output  array of exactly 32 bytes where final hash will be written
+     */
+    inline void hash_double_sha256(const std::vector<uint8_t>& input, std::array<uint8_t, 32>& output) {
+        std::array<uint8_t, 32> first;
+        hash_sha256(input, first);
+        hash_sha256(first, output);
+    }
+
+    /* @brief   Compute double SHA-256 of raw bytes.
+     * @param   data    pointer to bytes
+     * @param   len     number of bytes
+     * @param   output  array of exactly 32 bytes where final hash will be written
+     */
+    inline void hash_double_sha256(const uint8_t* data, size_t len, std::array<uint8_t, 32>& output) {
+        std::array<uint8_t, 32> first;
+        hash_sha256(data, len, first);
+        hash_sha256(first, output);
+    }
+
     /* @brief                   Hash string by RIPEMD-160.
      * @param ripemd160_hash    out for ripemd-160 hash.
      * @param input             input in bytes.
@@ -48,7 +98,7 @@ namespace crypto {
      */
     inline void hash_ripemd160(unsigned char* ripemd160_hash, unsigned char* input, size_t len) {
         std::string input_string = bytes_to_hex(input, len);
-        Logger::instance().debug("Prepare ripemd160 for {}.", input_string);
+        Logger::instance().debug("hash_ripemd160: Prepare ripemd160 for {}.", input_string);
         CryptoPP::RIPEMD160 hasher;
         hasher.CalculateDigest(ripemd160_hash, input, len);
     }

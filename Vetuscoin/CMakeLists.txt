@@ -6,7 +6,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 link_directories(${PROJECT_SOURCE_DIR}/libs)
 
 file(GLOB_RECURSE SRC_FILES "src/*.cpp")
-add_executable(${PROJECT_NAME} ${SRC_FILES}          "include/crypto/ecdsa.cpp" "include/crypto/ecdsa.h" "include/logger.h" "include/crypto/secp256k1context.h")
+add_executable(${PROJECT_NAME} ${SRC_FILES}          "include/crypto/ecdsa.cpp" "include/crypto/ecdsa.h" "include/logger.h" "include/crypto/secp256k1context.h" "include/core/transaction.h" "include/core/transaction.cpp" "include/core/serializer.h")
 
 if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /utf-8)

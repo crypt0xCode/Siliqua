@@ -59,7 +59,7 @@ inline int fill_random(unsigned char* data, size_t size) {
  *  @param byte_data    unsigned char byte array.
  *  @param len          byte array length.
  *  @return             hex string.
-*/
+ */
 inline std::string bytes_to_hex(const unsigned char* byte_data, size_t len) {
     std::ostringstream stream;
     stream << std::hex << std::setfill('0');
@@ -67,5 +67,36 @@ inline std::string bytes_to_hex(const unsigned char* byte_data, size_t len) {
         stream << std::setw(2) << static_cast<int>(byte_data[i]);
     }
     return stream.str();
+}
+
+
+/* @brief   Write hex char symbol to byte.
+ * @return  byte symbol.
+ */
+inline uint8_t hexCharToByte(char c) {
+    if (c >= '0' && c <= '9') return c - '0';
+    else if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    else if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    else {
+        throw std::invalid_argument("hexCharToByte: invalid hex symbol.");
+    }
+}
+
+/* @brief   Convert hex to uint8_t array with 32 bytes.
+ * @return  uint8_t array with 32 bytes.
+ */
+inline std::array<uint8_t, 32> hexToArray32(const std::string& hex) {
+    // 32 bytes equals 64 hex symbols.
+    if (hex.length() != 64) {
+        throw std::length_error("hexToArray32: hex length must be only 64 symbols.");
+    }
+
+    std::array<uint8_t, 32> bytes;
+    for (size_t i = 0; i < 32; ++i) {
+        uint8_t high = hexCharToByte(hex[i * 2]);
+        uint8_t low = hexCharToByte(hex[i * 2 + 1]);
+        bytes[i] = (high << 4) | low;
+    }
+    return bytes;
 }
 #endif

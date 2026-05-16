@@ -2,9 +2,11 @@
 //
 #include "Vetuscoin.h"
 using namespace crypto;
+using namespace transaction;
 
 int main()
 {
+    std::string prefix = "main: ";
     const int STD_SIZE = 32;
     const int RIPEMD160_SIZE = 20;
 
@@ -33,7 +35,7 @@ int main()
         return EXIT_FAILURE;
     }
     else {
-        Logger::instance().info("Keypair generation completed successfully.\nSecret key: {}.\nPublic key: {}.\n", keypair.at(0), keypair.at(1));
+        Logger::instance().info("{}Keypair generation completed successfully.\nSecret key: {}.\nPublic key: {}.\n", prefix, keypair.at(0), keypair.at(1));
     }
 
     // Generate signature.
@@ -46,7 +48,7 @@ int main()
         return EXIT_FAILURE;
     }
     else {
-        Logger::instance().info("Signature generation completed successfully.\nSignature: {}.\n", string_signature);
+        Logger::instance().info("{}Signature generation completed successfully.\nSignature: {}.\n", prefix, string_signature);
     }
 
     // Verify pubkey with signature.
@@ -55,7 +57,7 @@ int main()
         return EXIT_FAILURE;
     }
     else {
-        Logger::instance().info("Signature verification completed successfully.\n");
+        Logger::instance().info("{}Signature verification completed successfully.\n", prefix);
     }
 
     // Generate address from public key.
@@ -66,8 +68,39 @@ int main()
         return EXIT_FAILURE;
     }
     else {
-        Logger::instance().info("Address generation completed successfully.\nAddress: {}.\n", string_serialized_address);
+        Logger::instance().info("{}Address generation completed successfully.\nAddress: {}.\n\n\n\n", prefix, string_serialized_address);
     }
+
+
+    // Create new tx.
+    std::vector<CTxIn> enterings;
+    std::vector<CTxOut> outs;
+
+    // Entering example.
+    COutPoint prevout;
+    prevout.txid.fill(1);
+    prevout.n = 1;
+    CTxIn txin(prevout, std::vector<uint8_t>{0x01, 0x02}, 0xFFFFFFFF);
+    enterings.push_back(txin);
+
+    // Out example.
+    CTxOut txout(100000, std::vector<uint8_t>{0xAA, 0xBB});
+    outs.push_back(txout);
+
+    Transaction tx(1, enterings, outs, 0);
+
+    auto hash = tx.GetHash();
+
+    Logger::instance().info("{}New transaction generated successfully.\nHash: {}.\n", prefix, bytes_to_hex(hash.data(), hash.size()));
+    Logger::instance().info("{}Is coinbase? {}.\n", prefix, tx.IsCoinbase());
+
+    // Coinbase example.
+    CTxIn coinbaseIn;
+    coinbaseIn.scriptSig = std::vector<uint8_t>{ 0x00 };
+    Transaction coinbaseTx(1, { coinbaseIn }, outs, 0);
+    auto coinbase_hash = coinbaseTx.GetHash();
+    Logger::instance().info("{}New transaction generated successfully.\nHash: {}.\n", prefix, bytes_to_hex(coinbase_hash.data(), coinbase_hash.size()));
+    Logger::instance().info("{}Is coinbase? {}.\n", prefix, coinbaseTx.IsCoinbase());
 
     return 0;
 }
