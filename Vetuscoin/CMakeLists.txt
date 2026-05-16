@@ -68,20 +68,10 @@ endif()
 
 file(GLOB_RECURSE SRC_FILES "src/*.cpp")
 
-# Windows: compile Crypto++ from sources
-if(WIN32)
-    file(GLOB_RECURSE CRYPTOPP_SOURCES "include/cryptopp/*.cpp")
-    list(APPEND SRC_FILES ${CRYPTOPP_SOURCES})
-endif()
-
-# Include own .cpp files from include (excluding cryptopp on macOS)
+# Collect own .cpp files from include (excluding any cryptopp sources)
 file(GLOB_RECURSE INCLUDE_CPP_FILES "include/*.cpp")
-
-if(NOT WIN32)
-    # On macOS/Linux: remove all cryptopp .cpp files
-    list(FILTER INCLUDE_CPP_FILES EXCLUDE REGEX ".*/cryptopp/.*\\.cpp$")
-endif()
-
+# Remove all cryptopp .cpp files regardless of platform
+list(FILTER INCLUDE_CPP_FILES EXCLUDE REGEX ".*/cryptopp/.*\\.cpp$")
 list(APPEND SRC_FILES ${INCLUDE_CPP_FILES})
 
 add_executable(${PROJECT_NAME} ${SRC_FILES})
@@ -92,6 +82,7 @@ add_executable(${PROJECT_NAME} ${SRC_FILES})
 
 if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /utf-8)
+    # Optionally disable warnings for external headers
     target_compile_options(${PROJECT_NAME} PRIVATE /W0)
 endif()
 
