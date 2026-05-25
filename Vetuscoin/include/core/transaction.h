@@ -48,10 +48,11 @@ namespace transaction {
         std::vector<CTxIn> vin;
         std::vector<CTxOut> vout;
         uint32_t nLockTime;
+        std::array<uint8_t, 32> tx_hash{};
 
-        Transaction() : nVersion((int32_t) 0), nLockTime((uint32_t) 0) { vin = {}; vout = {}; }
+        Transaction() : nVersion((int32_t)0), nLockTime((uint32_t)0) { vin = {}; vout = {}; tx_hash = {}; }
         Transaction(int32_t version, const std::vector<CTxIn>& inputs,
-            const std::vector<CTxOut>& outputs, uint32_t lockTime = 0) : nVersion(version), vin(inputs), vout(outputs), nLockTime(lockTime) {}
+            const std::vector<CTxOut>& outputs, uint32_t lockTime = 0) : nVersion(version), vin(inputs), vout(outputs), nLockTime(lockTime), tx_hash(tx_hash) {}
 
         /*  @brief  Get transaction hash (all params writes in the main buffer as little-endians).
          *  @return tx hash (double SHA-256).

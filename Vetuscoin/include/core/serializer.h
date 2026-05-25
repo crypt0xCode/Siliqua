@@ -17,7 +17,7 @@ namespace serializer {
     }
 
     /* @brief   Write 8 bytes integer to the little-endian.
-    *  @return  little-endian 4 bytes.
+    *  @return  little-endian 8 bytes.
     */
     inline void write_uint_64LE(std::vector<uint8_t>& out, uint64_t value) {
         out.push_back(static_cast<uint8_t>(value & 0xFF));

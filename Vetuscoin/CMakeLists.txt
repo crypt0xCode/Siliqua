@@ -74,7 +74,7 @@ file(GLOB_RECURSE INCLUDE_CPP_FILES "include/*.cpp")
 list(FILTER INCLUDE_CPP_FILES EXCLUDE REGEX ".*/cryptopp/.*\\.cpp$")
 list(APPEND SRC_FILES ${INCLUDE_CPP_FILES})
 
-add_executable(${PROJECT_NAME} ${SRC_FILES})
+add_executable(${PROJECT_NAME} ${SRC_FILES} "include/core/block.h")
 
 # ============================================================================
 # Compile (Windows: UTF-8)

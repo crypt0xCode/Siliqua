@@ -3,6 +3,7 @@
 #include "Vetuscoin.h"
 using namespace crypto;
 using namespace transaction;
+using namespace block;
 
 int main()
 {
@@ -88,19 +89,32 @@ int main()
     outs.push_back(txout);
 
     Transaction tx(1, enterings, outs, 0);
-
-    auto hash = tx.GetHash();
-
-    Logger::instance().info("{}New transaction generated successfully.\nHash: {}.\n", prefix, bytes_to_hex(hash.data(), hash.size()));
+    tx.tx_hash = tx.GetHash();
+    Logger::instance().info("{}New transaction generated successfully.\nHash: {}.\n", prefix, bytes_to_hex(tx.tx_hash.data(), tx.tx_hash.size()));
     Logger::instance().info("{}Is coinbase? {}.\n", prefix, tx.IsCoinbase());
 
     // Coinbase example.
     CTxIn coinbaseIn;
     coinbaseIn.scriptSig = std::vector<uint8_t>{ 0x00 };
     Transaction coinbaseTx(1, { coinbaseIn }, outs, 0);
-    auto coinbase_hash = coinbaseTx.GetHash();
-    Logger::instance().info("{}New transaction generated successfully.\nHash: {}.\n", prefix, bytes_to_hex(coinbase_hash.data(), coinbase_hash.size()));
+    coinbaseTx.tx_hash = coinbaseTx.GetHash();
+    Logger::instance().info("{}New transaction generated successfully.\nHash: {}.\n", prefix, bytes_to_hex(coinbaseTx.tx_hash.data(), coinbaseTx.tx_hash.size()));
     Logger::instance().info("{}Is coinbase? {}.\n", prefix, coinbaseTx.IsCoinbase());
 
+    // Block example.
+    CBlock firstBlock;
+    firstBlock.hashPrevBlock = std::array<uint8_t, 32>{};
+    firstBlock.nBits = 0x1d00ffff;
+    firstBlock.nNonce = 0;
+    firstBlock.vtx.push_back(coinbaseTx);
+    firstBlock.hashMerkleRoot = firstBlock.BuildMerkleRoot();
+
+    Logger::instance().info("{}New block generated successfully."
+        "\nHash previous block: {}\nMerkle Root Hash: {}" 
+        "\nnBit: {}\nnNonce: {}\nIs Merkle Root valid: {}\nIs valid: {}\n",
+        prefix,
+        bytes_to_hex(firstBlock.hashPrevBlock.data(), firstBlock.hashPrevBlock.size()),
+        bytes_to_hex(firstBlock.hashMerkleRoot.data(), firstBlock.hashMerkleRoot.size()),
+        firstBlock.nBits, firstBlock.nNonce, firstBlock.IsMerkleRootValid(), firstBlock.IsValid());
     return 0;
 }
