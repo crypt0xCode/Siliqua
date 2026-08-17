@@ -13,8 +13,11 @@ int main(int argc, char* argv[])
     std::vector<std::string> args(argv + 1, argv + argc);
 
     // ./Vetuscoin --seed <path>                        - mine a fresh genesis-only chain and save it.
+    // The genesis coinbase pays an all-zero placeholder address (nobody's wallet), so the seed
+    // chain stays neutral - every node that copies it starts equally unable to spend it, and
+    // real balances only start accruing from each node's own first --listen run onward.
     if (args.size() >= 2 && args[0] == "--seed") {
-        save_chain(build_genesis_chain(), args[1]);
+        save_chain(build_genesis_chain(std::array<uint8_t, wallet::ADDRESS_SIZE>{}), args[1]);
         return 0;
     }
 
@@ -32,6 +35,34 @@ int main(int argc, char* argv[])
         uint16_t port = static_cast<uint16_t>(std::stoi(args[2]));
         std::string chain_path = args.size() >= 4 ? args[3] : "chain.dat";
         run_connector(host, port, chain_path);
+        return 0;
+    }
+
+    // ./Vetuscoin --address <chain_path>                - print this node's wallet address (hex).
+    if (args.size() >= 2 && args[0] == "--address") {
+        wallet::Wallet w = load_or_create_wallet(args[1] + ".wallet");
+        std::println("{}", bytes_to_hex(w.Address().data(), w.Address().size()));
+        return 0;
+    }
+
+    // ./Vetuscoin --send <host> <port> <chain_path> <recipient_hex> <amount>
+    //                                                    - sign a spend from chain_path's wallet
+    //                                                      and send it to a peer's mempool.
+    if (args.size() >= 6 && args[0] == "--send") {
+        std::string host = args[1];
+        uint16_t port = static_cast<uint16_t>(std::stoi(args[2]));
+        std::string chain_path = args[3];
+        auto recipient = wallet::address_from_hex(args[4]);
+        int64_t amount = std::stoll(args[5]);
+        run_send_tx(host, port, chain_path, recipient, amount);
+        return 0;
+    }
+
+    // ./Vetuscoin --receive-tx <port> <chain_path>       - accept one TX from a peer into the mempool.
+    if (args.size() >= 3 && args[0] == "--receive-tx") {
+        uint16_t port = static_cast<uint16_t>(std::stoi(args[1]));
+        std::string chain_path = args[2];
+        run_receive_tx(port, chain_path);
         return 0;
     }
 

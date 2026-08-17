@@ -77,6 +77,7 @@ list(APPEND SRC_FILES ${INCLUDE_CPP_FILES})
 add_executable(${PROJECT_NAME} ${SRC_FILES} "include/core/block.h"
         include/consensus/pow.h
         include/storage/storage.h
+        include/wallet/wallet.h
         include/network/socket.h
         include/network/message.h
         include/network/peer.h

@@ -124,6 +124,46 @@ namespace storage {
         Logger::instance().info("{}Loaded {} UTXO(s) from {}.", prefix, utxos.size(), path);
         return utxos;
     }
+
+    /* @brief           Save a mempool (pending transactions) to a binary file: entry count
+    *                   (varint) followed by each Transaction::Serialize() back to back.
+    *  @param   mempool transactions to persist.
+    *  @param   path    destination file path.
+    */
+    inline void save_mempool(const std::vector<transaction::Transaction>& mempool, const std::string& path) {
+        std::string prefix = "save_mempool: ";
+
+        std::vector<uint8_t> buffer;
+        serializer::write_var_int32(buffer, static_cast<uint32_t>(mempool.size()));
+        for (const auto& tx : mempool) {
+            std::vector<uint8_t> tx_bytes = tx.Serialize();
+            buffer.insert(buffer.end(), tx_bytes.begin(), tx_bytes.end());
+        }
+
+        write_file(path, buffer);
+        Logger::instance().info("{}Saved {} transaction(s), {} bytes, to {}.", prefix, mempool.size(), buffer.size(), path);
+    }
+
+    /* @brief           Load a mempool from a binary file written by save_mempool().
+    *  @param   path    source file path.
+    *  @return          pending transactions in the order they were saved.
+    */
+    inline std::vector<transaction::Transaction> load_mempool(const std::string& path) {
+        std::string prefix = "load_mempool: ";
+
+        std::vector<uint8_t> buffer = read_file(path);
+        size_t offset = 0;
+        uint32_t count = serializer::read_var_int32(buffer, offset);
+
+        std::vector<transaction::Transaction> mempool;
+        mempool.reserve(count);
+        for (uint32_t i = 0; i < count; ++i) {
+            mempool.push_back(transaction::Transaction::Deserialize(buffer, offset));
+        }
+
+        Logger::instance().info("{}Loaded {} transaction(s) from {}.", prefix, mempool.size(), path);
+        return mempool;
+    }
 }
 
 #endif

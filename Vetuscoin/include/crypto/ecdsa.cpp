@@ -152,6 +152,6 @@ namespace crypto {
         is_signature_valid = secp256k1_ecdsa_verify(ctx, &sig, input_hash, &pubkey);
         Logger::instance().debug("{}Is the signature valid? {}!\n", prefix, is_signature_valid ? "true" : "false");
 
-        return EXIT_SUCCESS;
+        return is_signature_valid ? EXIT_SUCCESS : EXIT_FAILURE;
     }
 }

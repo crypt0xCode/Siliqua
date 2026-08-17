@@ -26,6 +26,7 @@ namespace network {
         inline const std::string INV = "inv";
         inline const std::string GETDATA = "getdata";
         inline const std::string BLOCK = "block";
+        inline const std::string TX = "tx";
     }
 
     struct Message {
