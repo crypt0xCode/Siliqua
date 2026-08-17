@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <cstdint>
-#include <cstring>
 
 namespace serializer {
     /* @brief   Write 4 bytes integer to the little-endian.

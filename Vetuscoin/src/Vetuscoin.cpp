@@ -4,6 +4,7 @@
 using namespace crypto;
 using namespace transaction;
 using namespace block;
+using namespace proof_of_work;
 
 int main()
 {
@@ -104,17 +105,22 @@ int main()
     // Block example.
     CBlock firstBlock;
     firstBlock.hashPrevBlock = std::array<uint8_t, 32>{};
-    firstBlock.nBits = 0x1d00ffff;
-    firstBlock.nNonce = 0;
+    firstBlock.nTime = static_cast<uint32_t>(std::time(nullptr));
     firstBlock.vtx.push_back(coinbaseTx);
     firstBlock.hashMerkleRoot = firstBlock.BuildMerkleRoot();
 
+    // Mine the block. NOTE: the real Bitcoin genesis nBits (0x1d00ffff) requires ~2^24
+    // hash attempts on average, which is too slow for a synchronous demo run (GetHash()
+    // itself logs on every field write) - use a much easier target instead, just to
+    // demonstrate the mining loop terminates and produces a hash satisfying its target.
+    mine_block(firstBlock, 0x207fffff);
+
     Logger::instance().info("{}New block generated successfully."
-        "\nHash previous block: {}\nMerkle Root Hash: {}" 
-        "\nnBit: {}\nnNonce: {}\nIs Merkle Root valid: {}\nIs valid: {}\n",
+        "\nHash previous block: {}\nMerkle Root Hash: {}"
+        "\nnBit: {}\nnNonce: {}\nIs Merkle Root valid: {}\nIs Proof of Work valid: {}\nIs valid: {}\n",
         prefix,
         bytes_to_hex(firstBlock.hashPrevBlock.data(), firstBlock.hashPrevBlock.size()),
         bytes_to_hex(firstBlock.hashMerkleRoot.data(), firstBlock.hashMerkleRoot.size()),
-        firstBlock.nBits, firstBlock.nNonce, firstBlock.IsMerkleRootValid(), firstBlock.IsValid());
+        firstBlock.nBits, firstBlock.nNonce, firstBlock.IsMerkleRootValid(), check_proof_of_work(firstBlock), firstBlock.IsValid());
     return 0;
 }
