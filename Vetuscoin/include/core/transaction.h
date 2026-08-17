@@ -20,6 +20,23 @@ namespace transaction {
          *  @return true or false.
          */
         bool IsNull() const;
+
+        /*  @brief  Serialize to bytes (txid 32 bytes + n 4 bytes little-endian).
+         *  @return serialized bytes.
+         */
+        std::vector<uint8_t> Serialize() const;
+
+        /*  @brief          Deserialize from bytes written by Serialize().
+         *  @param  data    buffer to read from.
+         *  @param  offset  in-out cursor position in the buffer.
+         *  @return         decoded COutPoint.
+         */
+        static COutPoint Deserialize(const std::vector<uint8_t>& data, size_t& offset);
+
+        /*  @brief  Ordering by txid then n, needed to use COutPoint as a std::map key (UTXO set).
+         *  @return true if this outpoint sorts before other.
+         */
+        bool operator<(const COutPoint& other) const;
 	};
 
     // Transaction enter.
@@ -30,6 +47,18 @@ namespace transaction {
 
         CTxIn() : scriptSig{}, nSequence(0xFFFFFFFF) { prevout = COutPoint(); }
         CTxIn(const COutPoint& out, const std::vector<uint8_t>& sig, uint32_t seq = 0xFFFFFFFF) : prevout(out), scriptSig(sig), nSequence(seq) {}
+
+        /*  @brief  Serialize to bytes (prevout + scriptSig length (varint) + scriptSig + nSequence).
+         *  @return serialized bytes.
+         */
+        std::vector<uint8_t> Serialize() const;
+
+        /*  @brief          Deserialize from bytes written by Serialize().
+         *  @param  data    buffer to read from.
+         *  @param  offset  in-out cursor position in the buffer.
+         *  @return         decoded CTxIn.
+         */
+        static CTxIn Deserialize(const std::vector<uint8_t>& data, size_t& offset);
     };
 
     // Transaction out.
@@ -39,6 +68,18 @@ namespace transaction {
 
         CTxOut() : nValue((int64_t)0), scriptPubKey{} {}
         CTxOut(int64_t value, const std::vector<uint8_t>& script) : nValue(value), scriptPubKey(script) {}
+
+        /*  @brief  Serialize to bytes (nValue 8 bytes + scriptPubKey length (varint) + scriptPubKey).
+         *  @return serialized bytes.
+         */
+        std::vector<uint8_t> Serialize() const;
+
+        /*  @brief          Deserialize from bytes written by Serialize().
+         *  @param  data    buffer to read from.
+         *  @param  offset  in-out cursor position in the buffer.
+         *  @return         decoded CTxOut.
+         */
+        static CTxOut Deserialize(const std::vector<uint8_t>& data, size_t& offset);
     };
 
     // Transaction class.
@@ -61,6 +102,18 @@ namespace transaction {
 
         // Check tx on coinbased (first in block).
         bool IsCoinbase() const;
+
+        /*  @brief  Serialize to bytes (same layout GetHash() hashes, reused for storage).
+         *  @return serialized bytes.
+         */
+        std::vector<uint8_t> Serialize() const;
+
+        /*  @brief          Deserialize from bytes written by Serialize(). Recomputes tx_hash.
+         *  @param  data    buffer to read from.
+         *  @param  offset  in-out cursor position in the buffer.
+         *  @return         decoded Transaction.
+         */
+        static Transaction Deserialize(const std::vector<uint8_t>& data, size_t& offset);
     };
 }
 

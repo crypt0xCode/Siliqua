@@ -7,7 +7,7 @@ using namespace crypto;
 using namespace serializer;
 
 namespace block {
-	std::array<uint8_t, 32> CBlockHeader::GetHash() const {
+	std::vector<uint8_t> CBlockHeader::Serialize() const {
 		/*
 		 *** all as little-endian
 		 *
@@ -20,7 +20,7 @@ namespace block {
 		 *
 		 * total: 80 bytes in buffer
 		 */
-		std::string prefix = "CBlockHeader GetHash: ";
+		std::string prefix = "CBlockHeader Serialize: ";
 
 		// Main buffer.
 		std::vector<uint8_t> buffer;
@@ -49,7 +49,24 @@ namespace block {
 		write_uint_32LE(buffer, static_cast<uint32_t>(nNonce));
 		Logger::instance().debug("{}Write nNonce 4 bytes.", prefix);
 
-		// Get double SHA-256 hash for filled buffer.
+		return buffer;
+	}
+
+	CBlockHeader CBlockHeader::Deserialize(const std::vector<uint8_t>& data, size_t& offset) {
+		CBlockHeader header{};
+		header.nVersion = static_cast<int32_t>(read_uint_32LE(data, offset));
+		header.hashPrevBlock = read_bytes32(data, offset);
+		header.hashMerkleRoot = read_bytes32(data, offset);
+		header.nTime = read_uint_32LE(data, offset);
+		header.nBits = read_uint_32LE(data, offset);
+		header.nNonce = read_uint_32LE(data, offset);
+		return header;
+	}
+
+	std::array<uint8_t, 32> CBlockHeader::GetHash() const {
+		// Serialize() builds the exact 80-byte buffer GetHash() used to build inline; hashing it
+		// here keeps the hash and the on-disk header format guaranteed to match.
+		std::vector<uint8_t> buffer = Serialize();
 		std::array<uint8_t, 32> result;
 		hash_double_sha256(buffer.data(), buffer.size(), result);
 		return result;
@@ -97,5 +114,34 @@ namespace block {
 
 	bool CBlock::IsValid() const {
 		return IsMerkleRootValid();
+	}
+
+	std::vector<uint8_t> CBlock::Serialize() const {
+		std::string prefix = "CBlock Serialize: ";
+
+		std::vector<uint8_t> buffer = CBlockHeader::Serialize();
+
+		write_var_int32(buffer, static_cast<uint32_t>(vtx.size()));
+		Logger::instance().debug("{}Write vtx count 4 bytes ({} transaction(s)).", prefix, vtx.size());
+
+		for (const auto& tx : vtx) {
+			std::vector<uint8_t> tx_bytes = tx.Serialize();
+			buffer.insert(buffer.end(), tx_bytes.begin(), tx_bytes.end());
+		}
+
+		return buffer;
+	}
+
+	CBlock CBlock::Deserialize(const std::vector<uint8_t>& data, size_t& offset) {
+		CBlock blk;
+		static_cast<CBlockHeader&>(blk) = CBlockHeader::Deserialize(data, offset);
+
+		uint32_t tx_count = read_var_int32(data, offset);
+		blk.vtx.reserve(tx_count);
+		for (uint32_t i = 0; i < tx_count; ++i) {
+			blk.vtx.push_back(transaction::Transaction::Deserialize(data, offset));
+		}
+
+		return blk;
 	}
 }

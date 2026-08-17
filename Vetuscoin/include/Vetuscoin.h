@@ -3,6 +3,7 @@
 #include "core/transaction.h"
 #include "core/block.h"
 #include "consensus/pow.h"
+#include "storage/storage.h"
 #include "logger.h"
 #include "utils.h"
 
@@ -10,3 +11,4 @@
 #include <print>
 #include <iostream>
 #include <ctime>
+#include <map>

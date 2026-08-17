@@ -75,7 +75,8 @@ list(FILTER INCLUDE_CPP_FILES EXCLUDE REGEX ".*/cryptopp/.*\\.cpp$")
 list(APPEND SRC_FILES ${INCLUDE_CPP_FILES})
 
 add_executable(${PROJECT_NAME} ${SRC_FILES} "include/core/block.h"
-        include/consensus/pow.h)
+        include/consensus/pow.h
+        include/storage/storage.h)
 
 # ============================================================================
 # Compile (Windows: UTF-8)

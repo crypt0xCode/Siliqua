@@ -5,6 +5,7 @@ using namespace crypto;
 using namespace transaction;
 using namespace block;
 using namespace proof_of_work;
+using namespace storage;
 
 int main()
 {
@@ -104,15 +105,17 @@ int main()
 
     // Block example.
     CBlock firstBlock;
+    firstBlock.nVersion = 1;
     firstBlock.hashPrevBlock = std::array<uint8_t, 32>{};
     firstBlock.nTime = static_cast<uint32_t>(std::time(nullptr));
     firstBlock.vtx.push_back(coinbaseTx);
     firstBlock.hashMerkleRoot = firstBlock.BuildMerkleRoot();
 
-    // Mine the block. NOTE: the real Bitcoin genesis nBits (0x1d00ffff) requires ~2^24
-    // hash attempts on average, which is too slow for a synchronous demo run (GetHash()
-    // itself logs on every field write) - use a much easier target instead, just to
-    // demonstrate the mining loop terminates and produces a hash satisfying its target.
+    // Mine the block. NOTE: the real Bitcoin genesis nBits (0x1d00ffff) requires ~2^32
+    // hash attempts on average (its target has 4 leading zero bytes), which is too slow
+    // for a synchronous demo run (GetHash() itself logs on every field write) - use a much
+    // easier target instead, just to demonstrate the mining loop terminates and produces
+    // a hash satisfying its target.
     mine_block(firstBlock, 0x207fffff);
 
     Logger::instance().info("{}New block generated successfully."
@@ -122,5 +125,25 @@ int main()
         bytes_to_hex(firstBlock.hashPrevBlock.data(), firstBlock.hashPrevBlock.size()),
         bytes_to_hex(firstBlock.hashMerkleRoot.data(), firstBlock.hashMerkleRoot.size()),
         firstBlock.nBits, firstBlock.nNonce, firstBlock.IsMerkleRootValid(), check_proof_of_work(firstBlock), firstBlock.IsValid());
+
+    // Persist the chain (single block, for now) and reload it to verify the round-trip.
+    std::vector<CBlock> chain{ firstBlock };
+    const std::string chain_path = "chain.dat";
+    save_chain(chain, chain_path);
+    std::vector<CBlock> loadedChain = load_chain(chain_path);
+
+    Logger::instance().info("{}Chain round-trip: saved {} block(s), loaded {} block(s), hash matches: {}.\n",
+        prefix, chain.size(), loadedChain.size(),
+        !loadedChain.empty() && loadedChain.at(0).GetHash() == firstBlock.GetHash());
+
+    // Build and persist a tiny UTXO set from firstBlock's coinbase output, then reload it.
+    std::map<COutPoint, CTxOut> utxos;
+    utxos.emplace(COutPoint(coinbaseTx.tx_hash, 0), coinbaseTx.vout.at(0));
+    const std::string utxo_path = "utxo.dat";
+    save_utxo_set(utxos, utxo_path);
+    std::map<COutPoint, CTxOut> loadedUtxos = load_utxo_set(utxo_path);
+
+    Logger::instance().info("{}UTXO round-trip: saved {} entrie(s), loaded {} entrie(s).\n",
+        prefix, utxos.size(), loadedUtxos.size());
     return 0;
 }

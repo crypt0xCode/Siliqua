@@ -21,6 +21,18 @@ namespace block {
          *  @return double SHA-256 hash for current block.
          */
         std::array<uint8_t, 32> GetHash() const;
+
+        /*  @brief  Serialize the 80-byte header (same layout GetHash() hashes, reused for storage).
+         *  @return serialized bytes.
+         */
+        std::vector<uint8_t> Serialize() const;
+
+        /*  @brief          Deserialize a header from bytes written by Serialize().
+         *  @param  data    buffer to read from.
+         *  @param  offset  in-out cursor position in the buffer.
+         *  @return         decoded CBlockHeader.
+         */
+        static CBlockHeader Deserialize(const std::vector<uint8_t>& data, size_t& offset);
     };
 
     class CBlock : public CBlockHeader {
@@ -41,6 +53,18 @@ namespace block {
          *  @return true or false.
          */
         bool IsValid() const;
+
+        /*  @brief  Serialize the full block (header + vtx count (varint) + each tx's Serialize()).
+         *  @return serialized bytes.
+         */
+        std::vector<uint8_t> Serialize() const;
+
+        /*  @brief          Deserialize a full block from bytes written by Serialize().
+         *  @param  data    buffer to read from.
+         *  @param  offset  in-out cursor position in the buffer.
+         *  @return         decoded CBlock.
+         */
+        static CBlock Deserialize(const std::vector<uint8_t>& data, size_t& offset);
     };
 }
 
