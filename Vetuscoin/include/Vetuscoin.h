@@ -4,6 +4,7 @@
 #include "core/block.h"
 #include "consensus/pow.h"
 #include "storage/storage.h"
+#include "network/node.h"
 #include "logger.h"
 #include "utils.h"
 

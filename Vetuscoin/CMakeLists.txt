@@ -76,7 +76,11 @@ list(APPEND SRC_FILES ${INCLUDE_CPP_FILES})
 
 add_executable(${PROJECT_NAME} ${SRC_FILES} "include/core/block.h"
         include/consensus/pow.h
-        include/storage/storage.h)
+        include/storage/storage.h
+        include/network/socket.h
+        include/network/message.h
+        include/network/peer.h
+        include/network/node.h)
 
 # ============================================================================
 # Compile (Windows: UTF-8)
@@ -97,9 +101,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         ${CRYPTOPP_LIB}
 )
 
-# bcrypt only for Windows
+# bcrypt (fill_random) and ws2_32 (Winsock, network/socket.h) only for Windows
 if(WIN32)
-    target_link_libraries(${PROJECT_NAME} PRIVATE bcrypt)
+    target_link_libraries(${PROJECT_NAME} PRIVATE bcrypt ws2_32)
 endif()
 
 # libsecp256k1 static build definition for Windows

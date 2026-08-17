@@ -3,8 +3,11 @@
 
 #include <array>
 #include <chrono>
+#include <cmath>
 #include <cstdint>
+#include <stdexcept>
 #include <string>
+#include <vector>
 #include "core/block.h"
 #include "logger.h"
 #include "utils.h"
@@ -102,6 +105,63 @@ namespace proof_of_work {
         auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
         Logger::instance().info("{}Block mined. nNonce: {}, nTime: {}, elapsed: {} ms.", prefix, header.nNonce, header.nTime, elapsed_ms);
+    }
+
+    /* @brief                           Compute the next block's difficulty from a header history,
+    *                                   matching Bitcoin's retarget rule: every retarget_interval
+    *                                   blocks, scale the target by actual_timespan / target_timespan,
+    *                                   clamped to [0.25x, 4x] so a burst of fast/slow blocks can't
+    *                                   swing the difficulty by more than 4x in one retarget.
+    *  @param   headers                 chain headers so far, oldest first (headers.back() is tip).
+    *  @param   retarget_interval       how many blocks between difficulty adjustments.
+    *  @param   target_timespan_seconds expected total time for retarget_interval blocks.
+    *  @return                          nBits to use for the next block.
+    */
+    inline uint32_t get_next_work_required(const std::vector<block::CBlockHeader>& headers,
+        uint32_t retarget_interval, uint32_t target_timespan_seconds) {
+        std::string prefix = "get_next_work_required: ";
+
+        if (headers.empty()) {
+            Logger::instance().error("{}Empty header history, cannot compute next difficulty.", prefix);
+            throw std::invalid_argument("get_next_work_required: empty header history");
+        }
+
+        uint32_t current_bits = headers.back().nBits;
+
+        // Not a retarget boundary yet - keep mining at the same difficulty as the last block.
+        if (headers.size() % retarget_interval != 0) {
+            return current_bits;
+        }
+
+        const block::CBlockHeader& period_start = headers.at(headers.size() - retarget_interval);
+        const block::CBlockHeader& period_end = headers.back();
+        int64_t actual_timespan = static_cast<int64_t>(period_end.nTime) - static_cast<int64_t>(period_start.nTime);
+
+        int64_t min_timespan = static_cast<int64_t>(target_timespan_seconds) / 4;
+        int64_t max_timespan = static_cast<int64_t>(target_timespan_seconds) * 4;
+        if (actual_timespan < min_timespan) actual_timespan = min_timespan;
+        if (actual_timespan > max_timespan) actual_timespan = max_timespan;
+
+        // NOTE: scales the (exponent, mantissa) pair directly using double, instead of exact
+        // 256-bit integer arithmetic (there is no big-integer type in this codebase, and
+        // arith_uint256-style exactness is not needed for local same-machine testing).
+        uint32_t exponent = current_bits >> 24;
+        uint32_t mantissa = current_bits & 0x007FFFFF;
+        double value = static_cast<double>(mantissa) * std::pow(2.0, 8.0 * (static_cast<double>(exponent) - 3.0));
+        value *= static_cast<double>(actual_timespan) / static_cast<double>(target_timespan_seconds);
+
+        uint32_t new_exponent = 3;
+        double m = value;
+        while (m >= 16777216.0) { // 2^24: mantissa must fit in 23 bits after the sign bit is masked off
+            m /= 256.0;
+            new_exponent += 1;
+        }
+        uint32_t new_mantissa = static_cast<uint32_t>(m) & 0x007FFFFF;
+        uint32_t new_bits = (new_exponent << 24) | new_mantissa;
+
+        Logger::instance().info("{}Retarget at height {}: actual timespan {}s (clamped to [{}, {}]), nBits {:#010x} -> {:#010x}.",
+            prefix, headers.size(), actual_timespan, min_timespan, max_timespan, current_bits, new_bits);
+        return new_bits;
     }
 }
 

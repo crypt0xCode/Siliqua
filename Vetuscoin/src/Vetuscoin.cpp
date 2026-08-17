@@ -6,9 +6,46 @@ using namespace transaction;
 using namespace block;
 using namespace proof_of_work;
 using namespace storage;
+using namespace network;
 
-int main()
+// Quick coinbase-only block for the network demo (--listen/--connect), mined at an easy
+// target so it does not depend on the interactive crypto/tx demo below.
+static CBlock BuildDemoBlock() {
+    CTxIn coinbaseIn;
+    coinbaseIn.scriptSig = std::vector<uint8_t>{ 0x00 };
+    Transaction coinbaseTx(1, { coinbaseIn }, { CTxOut(5000000000, std::vector<uint8_t>{0xAA, 0xBB}) }, 0);
+    coinbaseTx.tx_hash = coinbaseTx.GetHash();
+
+    CBlock blk;
+    blk.nVersion = 1;
+    blk.hashPrevBlock = std::array<uint8_t, 32>{};
+    blk.nTime = static_cast<uint32_t>(std::time(nullptr));
+    blk.vtx.push_back(coinbaseTx);
+    blk.hashMerkleRoot = blk.BuildMerkleRoot();
+    mine_block(blk, 0x207fffff);
+    return blk;
+}
+
+int main(int argc, char* argv[])
 {
+    std::vector<std::string> args(argv + 1, argv + argc);
+
+    // ./Vetuscoin --listen <port>            - mine a demo block and serve it to one peer.
+    if (args.size() >= 2 && args[0] == "--listen") {
+        uint16_t port = static_cast<uint16_t>(std::stoi(args[1]));
+        CBlock blockToAnnounce = BuildDemoBlock();
+        run_listener(port, blockToAnnounce);
+        return 0;
+    }
+
+    // ./Vetuscoin --connect <host> <port>    - fetch and validate whatever block the peer announces.
+    if (args.size() >= 3 && args[0] == "--connect") {
+        std::string host = args[1];
+        uint16_t port = static_cast<uint16_t>(std::stoi(args[2]));
+        run_connector(host, port);
+        return 0;
+    }
+
     std::string prefix = "main: ";
     const int STD_SIZE = 32;
     const int RIPEMD160_SIZE = 20;
@@ -145,5 +182,22 @@ int main()
 
     Logger::instance().info("{}UTXO round-trip: saved {} entrie(s), loaded {} entrie(s).\n",
         prefix, utxos.size(), loadedUtxos.size());
+
+    // Difficulty retarget demo (Этап 3, п.3.4): 5 synthetic headers, 5 seconds apart (20s total),
+    // retargeting every 5 blocks against a 60s target - blocks arrived 3x faster than wanted,
+    // so the next nBits should come out harder (smaller target).
+    std::vector<CBlockHeader> headers;
+    uint32_t demo_bits = 0x207fffff;
+    uint32_t demo_time = static_cast<uint32_t>(std::time(nullptr)) - 20;
+    for (int i = 0; i < 5; ++i) {
+        CBlockHeader h{};
+        h.nBits = demo_bits;
+        h.nTime = demo_time + static_cast<uint32_t>(i) * 5;
+        headers.push_back(h);
+    }
+    uint32_t next_bits = get_next_work_required(headers, 5, 60);
+    Logger::instance().info("{}Retarget demo: 5 blocks in {}s (target 60s), nBits {:#010x} -> {:#010x}.\n",
+        prefix, headers.back().nTime - headers.front().nTime, demo_bits, next_bits);
+
     return 0;
 }
