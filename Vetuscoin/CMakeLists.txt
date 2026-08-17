@@ -4,11 +4,23 @@ project("Vetuscoin")
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Single-config generators (Makefiles, Ninja) build unoptimized "" by default unless a build
+# type is given explicitly - default to Release so a plain `cmake .. && cmake --build .` still
+# produces an optimized binary, which is what matters on weak/old hardware.
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+
 # ============================================================================
 # Cross-platform libs search
 # ============================================================================
 
 find_package(PkgConfig QUIET)
+
+# network/daemon.h uses std::thread - on Linux this needs an explicit -lpthread; Threads::Threads
+# resolves that per-platform instead of hardcoding a flag that would not apply everywhere.
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 
 # libsecp256k1
 if(WIN32)
@@ -81,7 +93,8 @@ add_executable(${PROJECT_NAME} ${SRC_FILES} "include/core/block.h"
         include/network/socket.h
         include/network/message.h
         include/network/peer.h
-        include/network/node.h)
+        include/network/node.h
+        include/network/daemon.h)
 
 # ============================================================================
 # Compile (Windows: UTF-8)
@@ -91,6 +104,13 @@ if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /utf-8)
     # Optionally disable warnings for external headers
     target_compile_options(${PROJECT_NAME} PRIVATE /W0)
+    # MSVC's own Release default is already /O2 - nothing to override here.
+else()
+    # CMake's own GCC/Clang Release default is -O3, which favors aggressive inlining and
+    # auto-vectorization (including instruction sets an old CPU may not have). -O2 is the
+    # more conservative, widely-recommended choice for old/weak hardware: still well optimized,
+    # smaller code, no risk of targeting instructions the target CPU does not support.
+    target_compile_options(${PROJECT_NAME} PRIVATE $<$<CONFIG:Release>:-O2>)
 endif()
 
 # ============================================================================
@@ -100,6 +120,7 @@ endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE
         ${SECP256K1_LIB}
         ${CRYPTOPP_LIB}
+        Threads::Threads
 )
 
 # bcrypt (fill_random) and ws2_32 (Winsock, network/socket.h) only for Windows

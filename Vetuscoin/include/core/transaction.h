@@ -2,6 +2,9 @@
 #define TRANSACTION_H
 
 #include <array>
+#include <cstddef>
+#include <functional>
+#include <unordered_map>
 #include <vector>
 #include "serializer.h"
 
@@ -33,11 +36,29 @@ namespace transaction {
          */
         static COutPoint Deserialize(const std::vector<uint8_t>& data, size_t& offset);
 
-        /*  @brief  Ordering by txid then n, needed to use COutPoint as a std::map key (UTXO set).
+        /*  @brief  Ordering by txid then n, needed to use COutPoint as a std::map key.
          *  @return true if this outpoint sorts before other.
          */
         bool operator<(const COutPoint& other) const;
+
+        /*  @brief  Equality, needed alongside COutPointHash to use COutPoint in a hash-based
+         *          container (UtxoSet uses std::unordered_map, not std::map - O(1) average
+         *          lookup instead of O(log n), which matters once the UTXO set gets large).
+         *  @return true if txid and n are both equal.
+         */
+        bool operator==(const COutPoint& other) const;
 	};
+
+    // Hashes a COutPoint for use as an std::unordered_map key (see UtxoSet below).
+    struct COutPointHash {
+        size_t operator()(const COutPoint& outpoint) const {
+            size_t h = 0;
+            for (uint8_t b : outpoint.txid) {
+                h = h * 131 + b;
+            }
+            return h ^ (std::hash<uint32_t>()(outpoint.n) << 1);
+        }
+    };
 
     // Transaction input.
     struct CTxIn {
@@ -82,6 +103,10 @@ namespace transaction {
         static CTxOut Deserialize(const std::vector<uint8_t>& data, size_t& offset);
     };
 
+    // outpoint -> unspent output. O(1) average lookup (see COutPointHash) instead of std::map's
+    // O(log n) - the UTXO set is exactly the structure that gets hit hardest as a chain grows.
+    using UtxoSet = std::unordered_map<COutPoint, CTxOut, COutPointHash>;
+
     class Transaction {
     public:
         int32_t nVersion;
@@ -92,7 +117,7 @@ namespace transaction {
 
         Transaction() : nVersion((int32_t)0), nLockTime((uint32_t)0) { vin = {}; vout = {}; tx_hash = {}; }
         Transaction(int32_t version, const std::vector<CTxIn>& inputs,
-            const std::vector<CTxOut>& outputs, uint32_t lockTime = 0) : nVersion(version), vin(inputs), vout(outputs), nLockTime(lockTime), tx_hash(tx_hash) {}
+            const std::vector<CTxOut>& outputs, uint32_t lockTime = 0) : nVersion(version), vin(inputs), vout(outputs), nLockTime(lockTime) {}
 
         /*  @brief  Get transaction hash (all params writes in the main buffer as little-endians).
          *  @return tx hash (double SHA-256).

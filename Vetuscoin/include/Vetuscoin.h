@@ -5,6 +5,7 @@
 #include "consensus/pow.h"
 #include "storage/storage.h"
 #include "network/node.h"
+#include "network/daemon.h"
 #include "logger.h"
 #include "utils.h"
 

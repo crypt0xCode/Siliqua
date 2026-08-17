@@ -34,6 +34,10 @@ namespace transaction {
 		return n < other.n;
 	}
 
+	bool COutPoint::operator==(const COutPoint& other) const {
+		return txid == other.txid && n == other.n;
+	}
+
 	std::vector<uint8_t> CTxIn::Serialize() const {
 		std::string prefix = "CTxIn Serialize: ";
 

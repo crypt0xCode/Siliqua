@@ -163,6 +163,38 @@ namespace proof_of_work {
             prefix, headers.size(), actual_timespan, min_timespan, max_timespan, current_bits, new_bits);
         return new_bits;
     }
+
+    /* @brief   Approximate the work one block at difficulty nBits represents: work = 2^256 / target,
+    *           expressed directly from nBits' own (exponent, mantissa) instead of materializing
+    *           the 32-byte target and doing a 256-bit divide (no big-integer type in this
+    *           codebase - same double-based simplification as get_next_work_required()).
+    *  @param   nBits   compact difficulty.
+    *  @return          relative amount of work (only meaningful compared against other blocks').
+    */
+    inline double calculate_block_work(uint32_t nBits) {
+        uint32_t exponent = nBits >> 24;
+        uint32_t mantissa = nBits & 0x007FFFFF;
+        if (mantissa == 0) {
+            return 0.0; // degenerate target, contributes no work
+        }
+        // target ~= mantissa * 256^(exponent - 3), so 2^256 / target ~= 2^(280 - 8*exponent) / mantissa.
+        return std::pow(2.0, 280.0 - 8.0 * static_cast<double>(exponent)) / static_cast<double>(mantissa);
+    }
+
+    /* @brief           Sum calculate_block_work() over every header - this, not block count, is
+    *                   what determines which of two competing chains actually "wins": Bitcoin's
+    *                   fork rule is most cumulative work, not longest chain (the two usually
+    *                   coincide, but only work is correct in general).
+    *  @param   headers chain headers to sum over.
+    *  @return          total chain work.
+    */
+    inline double calculate_chain_work(const std::vector<block::CBlockHeader>& headers) {
+        double total = 0.0;
+        for (const auto& header : headers) {
+            total += calculate_block_work(header.nBits);
+        }
+        return total;
+    }
 }
 
 #endif

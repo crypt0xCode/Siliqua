@@ -38,21 +38,34 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    // ./Vetuscoin --address <chain_path>                - print this node's wallet address (hex).
+    // ./Vetuscoin --address <chain_path>                - print this node's wallet address (Base58Check).
     if (args.size() >= 2 && args[0] == "--address") {
         wallet::Wallet w = load_or_create_wallet(args[1] + ".wallet");
-        std::println("{}", bytes_to_hex(w.Address().data(), w.Address().size()));
+        std::println("{}", wallet::encode_address(w.Address()));
         return 0;
     }
 
-    // ./Vetuscoin --send <host> <port> <chain_path> <recipient_hex> <amount>
+    // ./Vetuscoin --balance <chain_path>                - print this node's spendable UTXOs and total.
+    if (args.size() >= 2 && args[0] == "--balance") {
+        wallet::Wallet w = load_or_create_wallet(args[1] + ".wallet");
+        UtxoSet owned = filter_utxos_by_address(build_utxo_set(load_chain(args[1])), w.Address());
+        int64_t total = 0;
+        for (const auto& [outpoint, txout] : owned) {
+            total += txout.nValue;
+        }
+        std::println("{} UTXO(s), {} satoshi total.", owned.size(), total);
+        return 0;
+    }
+
+    // ./Vetuscoin --send <host> <port> <chain_path> <recipient_address> <amount>
     //                                                    - sign a spend from chain_path's wallet
-    //                                                      and send it to a peer's mempool.
+    //                                                      (paying network::DEFAULT_FEE) and send
+    //                                                      it to a peer's mempool.
     if (args.size() >= 6 && args[0] == "--send") {
         std::string host = args[1];
         uint16_t port = static_cast<uint16_t>(std::stoi(args[2]));
         std::string chain_path = args[3];
-        auto recipient = wallet::address_from_hex(args[4]);
+        auto recipient = wallet::decode_address(args[4]);
         int64_t amount = std::stoll(args[5]);
         run_send_tx(host, port, chain_path, recipient, amount);
         return 0;
@@ -64,6 +77,26 @@ int main(int argc, char* argv[])
         std::string chain_path = args[2];
         run_receive_tx(port, chain_path);
         return 0;
+    }
+
+    // ./Vetuscoin --daemon <port> <chain_path> [host:port ...]
+    //                                                    - run forever: accept any number of
+    //                                                      peers, mine and sync with any listed
+    //                                                      known peers every few seconds.
+    if (args.size() >= 3 && args[0] == "--daemon") {
+        uint16_t port = static_cast<uint16_t>(std::stoi(args[1]));
+        std::string chain_path = args[2];
+        std::vector<network::PeerAddress> peers;
+        for (size_t i = 3; i < args.size(); ++i) {
+            size_t colon = args[i].find(':');
+            if (colon == std::string::npos) {
+                Logger::instance().error("main: Ignoring malformed peer '{}', expected host:port.", args[i]);
+                continue;
+            }
+            peers.push_back({ args[i].substr(0, colon), static_cast<uint16_t>(std::stoi(args[i].substr(colon + 1))) });
+        }
+        network::Node node(port, chain_path, peers);
+        node.Run();
     }
 
     std::string prefix = "main: ";
@@ -161,11 +194,11 @@ int main(int argc, char* argv[])
     Logger::instance().info("{}Is coinbase? {}.\n", prefix, coinbaseTx.IsCoinbase());
 
     // Build and persist a tiny UTXO set from coinbaseTx's output, then reload it.
-    std::map<COutPoint, CTxOut> utxos;
+    UtxoSet utxos;
     utxos.emplace(COutPoint(coinbaseTx.tx_hash, 0), coinbaseTx.vout.at(0));
     const std::string utxo_path = "utxo.dat";
     save_utxo_set(utxos, utxo_path);
-    std::map<COutPoint, CTxOut> loadedUtxos = load_utxo_set(utxo_path);
+    UtxoSet loadedUtxos = load_utxo_set(utxo_path);
 
     Logger::instance().info("{}UTXO round-trip: saved {} entrie(s), loaded {} entrie(s).\n",
         prefix, utxos.size(), loadedUtxos.size());

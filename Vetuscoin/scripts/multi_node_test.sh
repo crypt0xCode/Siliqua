@@ -36,8 +36,8 @@ wait "$PID"
 cp "$WORKDIR/a.dat" "$WORKDIR/c.dat" # C wasn't a party to round 1, hand it the same result out of band
 
 # --address's own debug logging shares stdout with its output line, so pull out just the
-# 40-hex-char address line rather than trusting the whole captured output to be clean.
-ADDR_B=$("$BIN" --address "$WORKDIR/b.dat" 2>&1 | grep -E '^[0-9a-f]{40}$')
+# Base58Check address line rather than trusting the whole captured output to be clean.
+ADDR_B=$("$BIN" --address "$WORKDIR/b.dat" 2>&1 | grep -E '^[1-9A-HJ-NP-Za-km-z]{20,}$')
 echo "Node B address: $ADDR_B"
 
 echo

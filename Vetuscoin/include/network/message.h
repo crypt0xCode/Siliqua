@@ -27,6 +27,8 @@ namespace network {
         inline const std::string GETDATA = "getdata";
         inline const std::string BLOCK = "block";
         inline const std::string TX = "tx";
+        inline const std::string GETBLOCKS = "getblocks"; // request the peer's whole chain, for fork resolution
+        inline const std::string CHAIN = "chain";          // reply to GETBLOCKS: storage::serialize_chain() bytes
     }
 
     struct Message {

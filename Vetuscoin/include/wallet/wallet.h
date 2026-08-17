@@ -8,6 +8,9 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include "signing.h"
+#include "script.h"
+#include "base58.h"
 #include "crypto/ecdsa.h"
 #include "crypto/secp256k1context.h"
 #include "core/transaction.h"
@@ -15,24 +18,10 @@
 #include "utils.h"
 
 namespace wallet {
-    constexpr size_t ADDRESS_SIZE = 20;   // RIPEMD160(SHA256(compressed pubkey))
-    constexpr size_t SIGNATURE_SIZE = 64; // secp256k1 compact signature
-    constexpr size_t PUBKEY_SIZE = 33;    // compressed pubkey
-
-    /* @brief   Parse a 40-char hex string (as printed by --address) back into a raw address.
-    *  @param   hex     hex string, exactly ADDRESS_SIZE * 2 characters.
-    *  @return          decoded address.
-    */
-    inline std::array<uint8_t, ADDRESS_SIZE> address_from_hex(const std::string& hex) {
-        if (hex.length() != ADDRESS_SIZE * 2) {
-            throw std::length_error("address_from_hex: hex length must be " + std::to_string(ADDRESS_SIZE * 2) + " symbols");
-        }
-        std::array<uint8_t, ADDRESS_SIZE> bytes{};
-        for (size_t i = 0; i < ADDRESS_SIZE; ++i) {
-            bytes[i] = static_cast<uint8_t>((hexCharToByte(hex[i * 2]) << 4) | hexCharToByte(hex[i * 2 + 1]));
-        }
-        return bytes;
-    }
+    // Below this, change is not worth turning into its own UTXO: it would cost a weak node more
+    // to store and rescan that entry forever than the amount is worth. The leftover is simply
+    // not paid out (same idea as Bitcoin wallets folding dust-sized change into the fee).
+    constexpr int64_t DUST_THRESHOLD = 1000;
 
     // Holds a keypair and address, and can spend UTXOs paid to that address.
     class Wallet {
@@ -56,31 +45,54 @@ namespace wallet {
         const std::array<uint8_t, ADDRESS_SIZE>& Address() const { return address_; }
         const unsigned char* Seckey() const { return seckey_; }
 
-        /* @brief                       Build and sign a transaction spending utxo_value from
-        *                               utxo_outpoint: amount to recipient_address, the remainder
-        *                               back to this wallet as change.
-        *  @param   utxo_outpoint       outpoint of the UTXO to spend (must belong to this wallet).
-        *  @param   utxo_value          value of that UTXO.
+        /* @brief                       Build and sign a transaction spending enough UTXOs from
+        *                               available_utxos (assumed to already be filtered to ones
+        *                               this wallet owns) to cover amount + fee: amount to
+        *                               recipient_address, the remainder back to this wallet as
+        *                               change (omitted if it would be dust-sized). Selection is
+        *                               a simple greedy "keep adding UTXOs until there's enough" -
+        *                               not fee-optimal, but correct.
+        *  @param   available_utxos     this wallet's own spendable UTXOs.
         *  @param   recipient_address   who gets paid.
-        *  @param   amount              how much they get (must be <= utxo_value).
-        *  @return                      signed transaction, ready to include in a block.
+        *  @param   amount               how much they get.
+        *  @param   fee                  paid to whoever mines the block (not to any specific output).
+        *  @return                      signed transaction, ready to relay or include in a block.
         */
-        transaction::Transaction CreateTransaction(const transaction::COutPoint& utxo_outpoint, int64_t utxo_value,
-            const std::array<uint8_t, ADDRESS_SIZE>& recipient_address, int64_t amount) const {
-            if (amount > utxo_value) {
-                throw std::invalid_argument("Wallet::CreateTransaction: amount exceeds UTXO value");
+        transaction::Transaction CreateTransaction(const transaction::UtxoSet& available_utxos,
+            const std::array<uint8_t, ADDRESS_SIZE>& recipient_address, int64_t amount, int64_t fee) const {
+            std::vector<transaction::COutPoint> selected;
+            int64_t selected_total = 0;
+            for (const auto& [outpoint, txout] : available_utxos) {
+                selected.push_back(outpoint);
+                selected_total += txout.nValue;
+                if (selected_total >= amount + fee) {
+                    break;
+                }
+            }
+            if (selected_total < amount + fee) {
+                throw std::invalid_argument("Wallet::CreateTransaction: insufficient funds");
             }
 
-            transaction::CTxIn input(utxo_outpoint, {});
+            std::vector<transaction::CTxIn> inputs;
+            for (const auto& outpoint : selected) {
+                inputs.emplace_back(outpoint, std::vector<uint8_t>{});
+            }
+
             std::vector<transaction::CTxOut> outputs;
-            outputs.emplace_back(amount, std::vector<uint8_t>(recipient_address.begin(), recipient_address.end()));
-            int64_t change = utxo_value - amount;
-            if (change > 0) {
-                outputs.emplace_back(change, std::vector<uint8_t>(address_.begin(), address_.end()));
+            outputs.emplace_back(amount, script::build_p2pkh_script_pubkey(recipient_address));
+            int64_t change = selected_total - amount - fee;
+            if (change >= DUST_THRESHOLD) {
+                outputs.emplace_back(change, script::build_p2pkh_script_pubkey(address_));
             }
 
-            transaction::Transaction tx(1, { input }, outputs, 0);
-            tx.vin.at(0).scriptSig = Sign(tx);
+            transaction::Transaction tx(1, inputs, outputs, 0);
+
+            // All inputs are spent with the same key here (a wallet only ever selects its own
+            // UTXOs), so one signature over the whole transaction covers every input.
+            std::vector<uint8_t> script_sig = Sign(tx);
+            for (auto& in : tx.vin) {
+                in.scriptSig = script_sig;
+            }
             tx.tx_hash = tx.GetHash();
             return tx;
         }
@@ -104,29 +116,14 @@ namespace wallet {
             }
         }
 
-        // scriptSig = signature (64 bytes) + our compressed pubkey (33 bytes), P2PKH-style: lets a
-        // verifier recompute our address from the embedded pubkey, then check the signature.
+        // Signs the tx hash computed with every scriptSig empty - the signature must not depend
+        // on its own bytes (same idea as Bitcoin's SIGHASH_ALL pre-image) - then wraps it into a
+        // P2PKH scriptSig (signature + our compressed pubkey).
         std::vector<uint8_t> Sign(const transaction::Transaction& tx) const {
-            // Sign the tx hash computed with an empty scriptSig - the signature must not depend
-            // on its own bytes (same idea as Bitcoin's SIGHASH_ALL pre-image).
             std::array<uint8_t, 32> sighash = tx.GetHash();
-
-            // generate_sign() hashes a std::string internally rather than taking a raw 32-byte
-            // hash directly, so the hash is hex-encoded first - an extra layer, but still a
-            // deterministic 1:1 encoding of the sighash, so it does not weaken the signature.
-            std::string sighash_hex = bytes_to_hex(sighash.data(), sighash.size());
-
-            unsigned char serialized_sig[SIGNATURE_SIZE];
-            std::string sig_str;
-            secp256k1_ecdsa_signature sig;
-            unsigned char signed_hash[32];
-            if (crypto::generate_sign(sighash_hex, const_cast<unsigned char*>(seckey_), serialized_sig, sig_str, sig, signed_hash) != 0) {
-                throw std::runtime_error("Wallet::Sign: signing failed");
-            }
-
-            std::vector<uint8_t> script_sig(serialized_sig, serialized_sig + SIGNATURE_SIZE);
-            script_sig.insert(script_sig.end(), compressed_pubkey_, compressed_pubkey_ + PUBKEY_SIZE);
-            return script_sig;
+            std::vector<uint8_t> signature = sign_raw(seckey_, sighash);
+            std::vector<uint8_t> pubkey(compressed_pubkey_, compressed_pubkey_ + PUBKEY_SIZE);
+            return script::build_script_sig(signature, pubkey);
         }
 
         unsigned char seckey_[32];
@@ -135,45 +132,26 @@ namespace wallet {
         std::array<uint8_t, ADDRESS_SIZE> address_{};
     };
 
-    /* @brief                       Verify tx.vin[0]'s scriptSig: the embedded pubkey must hash to
-    *                               expected_script_pub_key (the UTXO's claimed owner), and the
-    *                               signature must be valid over tx's own hash-with-empty-scriptSig.
-    *  @param   tx                  transaction to check (must have exactly the scriptSig layout
-    *                               Wallet::Sign() produces: 64-byte signature + 33-byte pubkey).
-    *  @param   expected_script_pub_key  scriptPubKey of the UTXO tx.vin[0] claims to spend.
+    /* @brief                       Check that tx.vin[input_index]'s scriptSig is a valid spend
+    *                               of expected_script_pub_key, by running the actual script
+    *                               (script::evaluate) against tx's hash-with-every-scriptSig-empty.
+    *  @param   tx                  transaction to check.
+    *  @param   input_index         which input to check.
+    *  @param   expected_script_pub_key  scriptPubKey of the UTXO that input claims to spend.
     *  @return                      true if the input is a valid spend of that UTXO.
     */
-    inline bool verify_transaction_signature(const transaction::Transaction& tx, const std::vector<uint8_t>& expected_script_pub_key) {
-        if (tx.vin.empty() || tx.vin.at(0).scriptSig.size() != SIGNATURE_SIZE + PUBKEY_SIZE) {
-            return false;
-        }
-        const std::vector<uint8_t>& script_sig = tx.vin.at(0).scriptSig;
-
-        unsigned char serialized_sig[SIGNATURE_SIZE];
-        std::memcpy(serialized_sig, script_sig.data(), SIGNATURE_SIZE);
-        unsigned char compressed_pubkey[PUBKEY_SIZE];
-        std::memcpy(compressed_pubkey, script_sig.data() + SIGNATURE_SIZE, PUBKEY_SIZE);
-
-        std::array<uint8_t, ADDRESS_SIZE> derived_address{};
-        std::string address_str;
-        crypto::create_address_from_pubkey(compressed_pubkey, derived_address.data(), address_str);
-        if (expected_script_pub_key.size() != ADDRESS_SIZE ||
-            !std::equal(derived_address.begin(), derived_address.end(), expected_script_pub_key.begin())) {
+    inline bool verify_transaction_signature(const transaction::Transaction& tx, size_t input_index, const std::vector<uint8_t>& expected_script_pub_key) {
+        if (input_index >= tx.vin.size()) {
             return false;
         }
 
-        // Recompute the same sighash Wallet::Sign() signed: this tx's hash with an empty scriptSig.
         transaction::Transaction unsigned_tx = tx;
-        unsigned_tx.vin.at(0).scriptSig.clear();
+        for (auto& in : unsigned_tx.vin) {
+            in.scriptSig.clear();
+        }
         std::array<uint8_t, 32> sighash = unsigned_tx.GetHash();
-        std::string sighash_hex = bytes_to_hex(sighash.data(), sighash.size());
 
-        std::vector<unsigned char> message_hash(32);
-        crypto::hash_sha256(sighash_hex.begin(), sighash_hex.end(), message_hash);
-
-        secp256k1_ecdsa_signature sig;
-        secp256k1_pubkey pubkey;
-        return crypto::verify_sign(sig, serialized_sig, pubkey, compressed_pubkey, message_hash.data()) == 0;
+        return script::evaluate(tx.vin.at(input_index).scriptSig, expected_script_pub_key, sighash);
     }
 }
 
