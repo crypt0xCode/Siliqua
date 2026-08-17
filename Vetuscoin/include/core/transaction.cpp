@@ -9,7 +9,7 @@ using namespace serializer;
 namespace transaction {
 	bool COutPoint::IsNull() const {
 		return (COutPoint::n == 0xFFFFFFFF)
-			&& std::all_of(COutPoint::txid.begin(), COutPoint::txid.end(), [](uint8_t b) {return b == 0; }	// lambda function
+			&& std::all_of(COutPoint::txid.begin(), COutPoint::txid.end(), [](uint8_t b) {return b == 0; }
 		);
 	}
 
@@ -87,14 +87,11 @@ namespace transaction {
 	std::vector<uint8_t> Transaction::Serialize() const {
 		std::string prefix = "Transaction Serialize: ";
 
-		// Main buffer.
 		std::vector<uint8_t> buffer;
 
-		// nVersion (4b LE).
 		write_uint_32LE(buffer, static_cast<uint32_t>(nVersion));
 		Logger::instance().debug("{}Write nVersion 4 bytes.", prefix);
 
-		// Entering count (varint).
 		write_var_int32(buffer, static_cast<uint32_t>(vin.size()));
 		Logger::instance().debug("{}Write vin count 4 bytes ({} entering(s)).", prefix, vin.size());
 
@@ -103,7 +100,6 @@ namespace transaction {
 			buffer.insert(buffer.end(), txin_bytes.begin(), txin_bytes.end());
 		}
 
-		// Out count (varint).
 		write_var_int32(buffer, static_cast<uint32_t>(vout.size()));
 		Logger::instance().debug("{}Write vout count 4 bytes ({} out(s)).", prefix, vout.size());
 
@@ -112,7 +108,6 @@ namespace transaction {
 			buffer.insert(buffer.end(), txout_bytes.begin(), txout_bytes.end());
 		}
 
-		// Lock time (nLockTime).
 		write_uint_32LE(buffer, nLockTime);
 		Logger::instance().debug("{}Write nLockTime 4 bytes.", prefix);
 

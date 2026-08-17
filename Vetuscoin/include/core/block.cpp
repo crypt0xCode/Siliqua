@@ -22,30 +22,23 @@ namespace block {
 		 */
 		std::string prefix = "CBlockHeader Serialize: ";
 
-		// Main buffer.
 		std::vector<uint8_t> buffer;
 
-		// nVersion.
 		write_uint_32LE(buffer, static_cast<uint32_t>(nVersion));
 		Logger::instance().debug("{}Write nVersion 4 bytes.", prefix);
 
-		// hashPrevBlock.
 		write_bytes(buffer, hashPrevBlock.data(), hashPrevBlock.size());
 		Logger::instance().debug("{}Write hashPrevBlock 32 bytes.", prefix);
 
-		// hashMerkleRoot.
 		write_bytes(buffer, hashMerkleRoot.data(), hashMerkleRoot.size());
 		Logger::instance().debug("{}Write hashMerkleRoot 32 bytes.", prefix);
 
-		// nTime.
 		write_uint_32LE(buffer, static_cast<uint32_t>(nTime));
 		Logger::instance().debug("{}Write nTime 4 bytes.", prefix);
 
-		// nBits.
 		write_uint_32LE(buffer, static_cast<uint32_t>(nBits));
 		Logger::instance().debug("{}Write nBits 4 bytes.", prefix);
 
-		// nNonce.
 		write_uint_32LE(buffer, static_cast<uint32_t>(nNonce));
 		Logger::instance().debug("{}Write nNonce 4 bytes.", prefix);
 
@@ -75,8 +68,6 @@ namespace block {
 	std::array<uint8_t, 32> CBlock::BuildMerkleRoot() const {
 		std::string prefix = "BuildMerkleRoot: ";
 
-		// Merkle root for all txs in block.
-		// Get all tx hashes to the vector through lambda function.
 		std::vector<std::array<uint8_t, 32>> layers(vtx.size());
 		std::transform(
 			vtx.begin(), vtx.end(),
@@ -92,7 +83,6 @@ namespace block {
 			for (size_t i = 0; i < layers.size(); i += 2) {
 				std::array<uint8_t, 32> left = layers[i];
 				std::array<uint8_t, 32> right = (i + 1 < layers.size()) ? layers[i + 1] : left;
-				// Bytes concat via left + right hashes.
 				std::array<uint8_t, 64> concat;
 				std::copy(left.begin(), left.end(), concat.begin());
 				std::copy(right.begin(), right.end(), concat.begin() + 32);

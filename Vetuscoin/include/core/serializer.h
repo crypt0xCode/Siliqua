@@ -32,15 +32,15 @@ namespace serializer {
         out.push_back(static_cast<uint8_t>((value >> 56) & 0xFF));
     }
 
-    /* @brief   Write uint_32t to the varint.
+    /* @brief   Write value as a varint (currently just a plain 4 bytes little-endian, not a
+    *           true variable-length varint yet).
     *  @return  varint value.
     */
     inline void write_var_int32(std::vector<uint8_t>& out, uint32_t value) {
-        // For example, 4 bytes little-endian.
         write_uint_32LE(out, value);
     }
 
-    /* @brief   Write any bytes to array (for example, 5 or 32 and less or more bytes).
+    /* @brief   Write len raw bytes.
     *  @return  bytes array.
     */
     inline void write_bytes(std::vector<uint8_t>& out, const uint8_t* data, size_t len) {

@@ -49,7 +49,7 @@ namespace block {
          */
         bool IsMerkleRootValid() const;
 
-        /*  @brief  Check block is valid    .
+        /*  @brief  Check block is valid.
          *  @return true or false.
          */
         bool IsValid() const;

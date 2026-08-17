@@ -8,7 +8,7 @@
 namespace transaction {
     // Previous tx out pointer.
 	struct COutPoint {
-        std::array<uint8_t, 32> txid;  // tx hash (32 bytes)
+        std::array<uint8_t, 32> txid;
         uint32_t n;                    // out index
 
         COutPoint() : n(0xFFFFFFFF) {
@@ -39,7 +39,7 @@ namespace transaction {
         bool operator<(const COutPoint& other) const;
 	};
 
-    // Transaction enter.
+    // Transaction input.
     struct CTxIn {
         COutPoint prevout;              // UTXO pointer
         std::vector<uint8_t> scriptSig; // sign (bytes for simplify)
@@ -61,7 +61,7 @@ namespace transaction {
         static CTxIn Deserialize(const std::vector<uint8_t>& data, size_t& offset);
     };
 
-    // Transaction out.
+    // Transaction output.
     struct CTxOut {
         int64_t nValue;                     // sum in satoshi
         std::vector<uint8_t> scriptPubKey;  // receiver (address/key)
@@ -82,7 +82,6 @@ namespace transaction {
         static CTxOut Deserialize(const std::vector<uint8_t>& data, size_t& offset);
     };
 
-    // Transaction class.
     class Transaction {
     public:
         int32_t nVersion;
