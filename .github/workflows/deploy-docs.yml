@@ -29,6 +29,12 @@ jobs:
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
+        with:
+          # Repo was private when Pages was first attempted, so it was never
+          # enabled at the repo-settings level. enablement: true makes this
+          # step turn Pages on via the API instead of requiring a manual
+          # Settings -> Pages -> Source: GitHub Actions click.
+          enablement: true
 
       # Publishes only Siliqua/docs/ as the site root, so
       # architecture.ru.html ends up at <pages-url>/architecture.ru.html
