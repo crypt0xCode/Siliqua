@@ -47,6 +47,6 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
-Vetuscoin/libs/*.lib filter=lfs diff=lfs merge=lfs -text
-Vetuscoin/libs/*.psd filter=lfs diff=lfs merge=lfs -text
-Vetuscoin/libs/*.pdb filter=lfs diff=lfs merge=lfs -text
+Siliqua/libs/*.lib filter=lfs diff=lfs merge=lfs -text
+Siliqua/libs/*.psd filter=lfs diff=lfs merge=lfs -text
+Siliqua/libs/*.pdb filter=lfs diff=lfs merge=lfs -text

@@ -1,21 +1,21 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="D:\Development\Cpp\Vetuscoin\Vetuscoin\src\Vetuscoin.cpp">
+    <ClCompile Include="D:\Development\Cpp\Siliqua\Siliqua\src\Siliqua.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Development\Cpp\Vetuscoin\Vetuscoin\include\core\block.cpp">
+    <ClCompile Include="D:\Development\Cpp\Siliqua\Siliqua\include\core\block.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Development\Cpp\Vetuscoin\Vetuscoin\include\core\transaction.cpp">
+    <ClCompile Include="D:\Development\Cpp\Siliqua\Siliqua\include\core\transaction.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\Development\Cpp\Vetuscoin\Vetuscoin\include\crypto\ecdsa.cpp">
+    <ClCompile Include="D:\Development\Cpp\Siliqua\Siliqua\include\crypto\ecdsa.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="D:\Development\Cpp\Vetuscoin\Vetuscoin\CMakeLists.txt" />
+    <CustomBuild Include="D:\Development\Cpp\Siliqua\Siliqua\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">

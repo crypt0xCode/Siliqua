@@ -4,13 +4,13 @@
 # Ends with a consensus check: do B and C agree on the resulting chain, byte for byte?
 #
 # Usage: ./scripts/multi_node_test.sh [workdir]
-# Run from the project root (needs bin/Vetuscoin already built).
+# Run from the project root (needs bin/Siliqua already built).
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-BIN="$PROJECT_ROOT/bin/Vetuscoin"
-WORKDIR="${1:-/tmp/vetuscoin_network_test}"
+BIN="$PROJECT_ROOT/bin/Siliqua"
+WORKDIR="${1:-/tmp/siliqua_network_test}"
 
 if [ ! -x "$BIN" ]; then
     echo "Build the project first: $BIN not found." >&2

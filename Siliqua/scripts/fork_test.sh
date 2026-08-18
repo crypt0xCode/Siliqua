@@ -5,13 +5,13 @@
 # lighter one it's shown afterward.
 #
 # Usage: ./scripts/fork_test.sh [workdir]
-# Run from the project root (needs bin/Vetuscoin already built).
+# Run from the project root (needs bin/Siliqua already built).
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-BIN="$PROJECT_ROOT/bin/Vetuscoin"
-WORKDIR="${1:-/tmp/vetuscoin_fork_test}"
+BIN="$PROJECT_ROOT/bin/Siliqua"
+WORKDIR="${1:-/tmp/siliqua_fork_test}"
 PORT=19200
 
 if [ ! -x "$BIN" ]; then

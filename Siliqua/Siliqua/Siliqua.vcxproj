@@ -26,7 +26,7 @@
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
     <Platform>x64</Platform>
-    <ProjectName>Vetuscoin</ProjectName>
+    <ProjectName>Siliqua</ProjectName>
     <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -59,34 +59,34 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Development\Cpp\Vetuscoin\Vetuscoin\bin\Debug\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vetuscoin.dir\Debug\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vetuscoin</TargetName>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Development\Cpp\Siliqua\Siliqua\bin\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Siliqua.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Siliqua</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.exe</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\Development\Cpp\Vetuscoin\Vetuscoin\bin\Release\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vetuscoin.dir\Release\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vetuscoin</TargetName>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\Development\Cpp\Siliqua\Siliqua\bin\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Siliqua.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Siliqua</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.exe</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\Development\Cpp\Vetuscoin\Vetuscoin\bin\MinSizeRel\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Vetuscoin.dir\MinSizeRel\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Vetuscoin</TargetName>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\Development\Cpp\Siliqua\Siliqua\bin\MinSizeRel\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Siliqua.dir\MinSizeRel\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Siliqua</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.exe</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</GenerateManifest>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\Development\Cpp\Vetuscoin\Vetuscoin\bin\RelWithDebInfo\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Vetuscoin.dir\RelWithDebInfo\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Vetuscoin</TargetName>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\Development\Cpp\Siliqua\Siliqua\bin\RelWithDebInfo\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Siliqua.dir\RelWithDebInfo\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Siliqua</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.exe</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\Development\Cpp\Vetuscoin\Vetuscoin\include;D:\Development\Cpp\Vetuscoin\Vetuscoin\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Development\Cpp\Siliqua\Siliqua\include;D:\Development\Cpp\Siliqua\Siliqua\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /utf-8</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -114,10 +114,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;SECP256K1_STATIC;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\Development\Cpp\Vetuscoin\Vetuscoin\include;D:\Development\Cpp\Vetuscoin\Vetuscoin\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Development\Cpp\Siliqua\Siliqua\include;D:\Development\Cpp\Siliqua\Siliqua\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>D:\Development\Cpp\Vetuscoin\Vetuscoin\include;D:\Development\Cpp\Vetuscoin\Vetuscoin\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Development\Cpp\Siliqua\Siliqua\include;D:\Development\Cpp\Siliqua\Siliqua\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -126,15 +126,15 @@
     </Midl>
     <Link>
       <AdditionalDependencies>..\libs\libsecp256k1.lib;..\libs\cryptlib.lib;bcrypt.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>D:/Development/Cpp/Vetuscoin/Vetuscoin/libs;D:/Development/Cpp/Vetuscoin/Vetuscoin/libs/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:/Development/Cpp/Siliqua/Siliqua/libs;D:/Development/Cpp/Siliqua/Siliqua/libs/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <DataExecutionPrevention></DataExecutionPrevention>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
-      <ImportLibrary>D:/Development/Cpp/Vetuscoin/Vetuscoin/Vetuscoin/Debug/Vetuscoin.lib</ImportLibrary>
+      <ImportLibrary>D:/Development/Cpp/Siliqua/Siliqua/Siliqua/Debug/Siliqua.lib</ImportLibrary>
       <LinkErrorReporting></LinkErrorReporting>
-      <ProgramDataBaseFile>D:/Development/Cpp/Vetuscoin/Vetuscoin/bin/Debug/Vetuscoin.pdb</ProgramDataBaseFile>
+      <ProgramDataBaseFile>D:/Development/Cpp/Siliqua/Siliqua/bin/Debug/Siliqua.pdb</ProgramDataBaseFile>
       <RandomizedBaseAddress></RandomizedBaseAddress>
       <SubSystem>Console</SubSystem>
     </Link>
@@ -144,7 +144,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\Development\Cpp\Vetuscoin\Vetuscoin\include;D:\Development\Cpp\Vetuscoin\Vetuscoin\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Development\Cpp\Siliqua\Siliqua\include;D:\Development\Cpp\Siliqua\Siliqua\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /utf-8</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -173,10 +173,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;SECP256K1_STATIC;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\Development\Cpp\Vetuscoin\Vetuscoin\include;D:\Development\Cpp\Vetuscoin\Vetuscoin\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Development\Cpp\Siliqua\Siliqua\include;D:\Development\Cpp\Siliqua\Siliqua\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>D:\Development\Cpp\Vetuscoin\Vetuscoin\include;D:\Development\Cpp\Vetuscoin\Vetuscoin\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Development\Cpp\Siliqua\Siliqua\include;D:\Development\Cpp\Siliqua\Siliqua\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -185,15 +185,15 @@
     </Midl>
     <Link>
       <AdditionalDependencies>..\libs\libsecp256k1.lib;..\libs\cryptlib.lib;bcrypt.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>D:/Development/Cpp/Vetuscoin/Vetuscoin/libs;D:/Development/Cpp/Vetuscoin/Vetuscoin/libs/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:/Development/Cpp/Siliqua/Siliqua/libs;D:/Development/Cpp/Siliqua/Siliqua/libs/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <DataExecutionPrevention></DataExecutionPrevention>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
-      <ImportLibrary>D:/Development/Cpp/Vetuscoin/Vetuscoin/Vetuscoin/Release/Vetuscoin.lib</ImportLibrary>
+      <ImportLibrary>D:/Development/Cpp/Siliqua/Siliqua/Siliqua/Release/Siliqua.lib</ImportLibrary>
       <LinkErrorReporting></LinkErrorReporting>
-      <ProgramDataBaseFile>D:/Development/Cpp/Vetuscoin/Vetuscoin/bin/Release/Vetuscoin.pdb</ProgramDataBaseFile>
+      <ProgramDataBaseFile>D:/Development/Cpp/Siliqua/Siliqua/bin/Release/Siliqua.pdb</ProgramDataBaseFile>
       <RandomizedBaseAddress></RandomizedBaseAddress>
       <SubSystem>Console</SubSystem>
     </Link>
@@ -203,7 +203,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\Development\Cpp\Vetuscoin\Vetuscoin\include;D:\Development\Cpp\Vetuscoin\Vetuscoin\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Development\Cpp\Siliqua\Siliqua\include;D:\Development\Cpp\Siliqua\Siliqua\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /utf-8</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -232,10 +232,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;SECP256K1_STATIC;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\Development\Cpp\Vetuscoin\Vetuscoin\include;D:\Development\Cpp\Vetuscoin\Vetuscoin\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Development\Cpp\Siliqua\Siliqua\include;D:\Development\Cpp\Siliqua\Siliqua\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>D:\Development\Cpp\Vetuscoin\Vetuscoin\include;D:\Development\Cpp\Vetuscoin\Vetuscoin\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Development\Cpp\Siliqua\Siliqua\include;D:\Development\Cpp\Siliqua\Siliqua\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -244,15 +244,15 @@
     </Midl>
     <Link>
       <AdditionalDependencies>..\libs\libsecp256k1.lib;..\libs\cryptlib.lib;bcrypt.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>D:/Development/Cpp/Vetuscoin/Vetuscoin/libs;D:/Development/Cpp/Vetuscoin/Vetuscoin/libs/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:/Development/Cpp/Siliqua/Siliqua/libs;D:/Development/Cpp/Siliqua/Siliqua/libs/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <DataExecutionPrevention></DataExecutionPrevention>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
-      <ImportLibrary>D:/Development/Cpp/Vetuscoin/Vetuscoin/Vetuscoin/MinSizeRel/Vetuscoin.lib</ImportLibrary>
+      <ImportLibrary>D:/Development/Cpp/Siliqua/Siliqua/Siliqua/MinSizeRel/Siliqua.lib</ImportLibrary>
       <LinkErrorReporting></LinkErrorReporting>
-      <ProgramDataBaseFile>D:/Development/Cpp/Vetuscoin/Vetuscoin/bin/MinSizeRel/Vetuscoin.pdb</ProgramDataBaseFile>
+      <ProgramDataBaseFile>D:/Development/Cpp/Siliqua/Siliqua/bin/MinSizeRel/Siliqua.pdb</ProgramDataBaseFile>
       <RandomizedBaseAddress></RandomizedBaseAddress>
       <SubSystem>Console</SubSystem>
     </Link>
@@ -262,7 +262,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\Development\Cpp\Vetuscoin\Vetuscoin\include;D:\Development\Cpp\Vetuscoin\Vetuscoin\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Development\Cpp\Siliqua\Siliqua\include;D:\Development\Cpp\Siliqua\Siliqua\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /utf-8</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -290,10 +290,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;SECP256K1_STATIC;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\Development\Cpp\Vetuscoin\Vetuscoin\include;D:\Development\Cpp\Vetuscoin\Vetuscoin\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Development\Cpp\Siliqua\Siliqua\include;D:\Development\Cpp\Siliqua\Siliqua\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>D:\Development\Cpp\Vetuscoin\Vetuscoin\include;D:\Development\Cpp\Vetuscoin\Vetuscoin\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Development\Cpp\Siliqua\Siliqua\include;D:\Development\Cpp\Siliqua\Siliqua\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -302,15 +302,15 @@
     </Midl>
     <Link>
       <AdditionalDependencies>..\libs\libsecp256k1.lib;..\libs\cryptlib.lib;bcrypt.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>D:/Development/Cpp/Vetuscoin/Vetuscoin/libs;D:/Development/Cpp/Vetuscoin/Vetuscoin/libs/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:/Development/Cpp/Siliqua/Siliqua/libs;D:/Development/Cpp/Siliqua/Siliqua/libs/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <DataExecutionPrevention></DataExecutionPrevention>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
-      <ImportLibrary>D:/Development/Cpp/Vetuscoin/Vetuscoin/Vetuscoin/RelWithDebInfo/Vetuscoin.lib</ImportLibrary>
+      <ImportLibrary>D:/Development/Cpp/Siliqua/Siliqua/Siliqua/RelWithDebInfo/Siliqua.lib</ImportLibrary>
       <LinkErrorReporting></LinkErrorReporting>
-      <ProgramDataBaseFile>D:/Development/Cpp/Vetuscoin/Vetuscoin/bin/RelWithDebInfo/Vetuscoin.pdb</ProgramDataBaseFile>
+      <ProgramDataBaseFile>D:/Development/Cpp/Siliqua/Siliqua/bin/RelWithDebInfo/Siliqua.pdb</ProgramDataBaseFile>
       <RandomizedBaseAddress></RandomizedBaseAddress>
       <SubSystem>Console</SubSystem>
     </Link>
@@ -319,11 +319,11 @@
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CustomBuild Include="D:\Development\Cpp\Vetuscoin\Vetuscoin\CMakeLists.txt">
+    <CustomBuild Include="D:\Development\Cpp\Siliqua\Siliqua\CMakeLists.txt">
       <UseUtf8Encoding>Always</UseUtf8Encoding>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule D:/Development/Cpp/Vetuscoin/Vetuscoin/CMakeLists.txt</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule D:/Development/Cpp/Siliqua/Siliqua/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
-C:\CMake\bin\cmake.exe -SD:/Development/Cpp/Vetuscoin -BD:/Development/Cpp/Vetuscoin/Vetuscoin --check-stamp-file D:/Development/Cpp/Vetuscoin/Vetuscoin/Vetuscoin/CMakeFiles/generate.stamp
+C:\CMake\bin\cmake.exe -SD:/Development/Cpp/Siliqua -BD:/Development/Cpp/Siliqua/Siliqua --check-stamp-file D:/Development/Cpp/Siliqua/Siliqua/Siliqua/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -332,11 +332,11 @@ exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\CMake\share\cmake-4.3\Modules\FindPackageHandleStandardArgs.cmake;C:\CMake\share\cmake-4.3\Modules\FindPackageMessage.cmake;C:\CMake\share\cmake-4.3\Modules\FindPkgConfig.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Development\Cpp\Vetuscoin\Vetuscoin\Vetuscoin\CMakeFiles\generate.stamp</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Development\Cpp\Siliqua\Siliqua\Siliqua\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule D:/Development/Cpp/Vetuscoin/Vetuscoin/CMakeLists.txt</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule D:/Development/Cpp/Siliqua/Siliqua/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
-C:\CMake\bin\cmake.exe -SD:/Development/Cpp/Vetuscoin -BD:/Development/Cpp/Vetuscoin/Vetuscoin --check-stamp-file D:/Development/Cpp/Vetuscoin/Vetuscoin/Vetuscoin/CMakeFiles/generate.stamp
+C:\CMake\bin\cmake.exe -SD:/Development/Cpp/Siliqua -BD:/Development/Cpp/Siliqua/Siliqua --check-stamp-file D:/Development/Cpp/Siliqua/Siliqua/Siliqua/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -345,11 +345,11 @@ exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\CMake\share\cmake-4.3\Modules\FindPackageHandleStandardArgs.cmake;C:\CMake\share\cmake-4.3\Modules\FindPackageMessage.cmake;C:\CMake\share\cmake-4.3\Modules\FindPkgConfig.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\Development\Cpp\Vetuscoin\Vetuscoin\Vetuscoin\CMakeFiles\generate.stamp</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\Development\Cpp\Siliqua\Siliqua\Siliqua\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
-      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule D:/Development/Cpp/Vetuscoin/Vetuscoin/CMakeLists.txt</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule D:/Development/Cpp/Siliqua/Siliqua/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
-C:\CMake\bin\cmake.exe -SD:/Development/Cpp/Vetuscoin -BD:/Development/Cpp/Vetuscoin/Vetuscoin --check-stamp-file D:/Development/Cpp/Vetuscoin/Vetuscoin/Vetuscoin/CMakeFiles/generate.stamp
+C:\CMake\bin\cmake.exe -SD:/Development/Cpp/Siliqua -BD:/Development/Cpp/Siliqua/Siliqua --check-stamp-file D:/Development/Cpp/Siliqua/Siliqua/Siliqua/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -358,11 +358,11 @@ exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\CMake\share\cmake-4.3\Modules\FindPackageHandleStandardArgs.cmake;C:\CMake\share\cmake-4.3\Modules\FindPackageMessage.cmake;C:\CMake\share\cmake-4.3\Modules\FindPkgConfig.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\Development\Cpp\Vetuscoin\Vetuscoin\Vetuscoin\CMakeFiles\generate.stamp</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\Development\Cpp\Siliqua\Siliqua\Siliqua\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
-      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule D:/Development/Cpp/Vetuscoin/Vetuscoin/CMakeLists.txt</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule D:/Development/Cpp/Siliqua/Siliqua/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
-C:\CMake\bin\cmake.exe -SD:/Development/Cpp/Vetuscoin -BD:/Development/Cpp/Vetuscoin/Vetuscoin --check-stamp-file D:/Development/Cpp/Vetuscoin/Vetuscoin/Vetuscoin/CMakeFiles/generate.stamp
+C:\CMake\bin\cmake.exe -SD:/Development/Cpp/Siliqua -BD:/Development/Cpp/Siliqua/Siliqua --check-stamp-file D:/Development/Cpp/Siliqua/Siliqua/Siliqua/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -371,19 +371,19 @@ exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\CMake\share\cmake-4.3\Modules\FindPackageHandleStandardArgs.cmake;C:\CMake\share\cmake-4.3\Modules\FindPackageMessage.cmake;C:\CMake\share\cmake-4.3\Modules\FindPkgConfig.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\Development\Cpp\Vetuscoin\Vetuscoin\Vetuscoin\CMakeFiles\generate.stamp</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\Development\Cpp\Siliqua\Siliqua\Siliqua\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="D:\Development\Cpp\Vetuscoin\Vetuscoin\src\Vetuscoin.cpp" />
-    <ClCompile Include="D:\Development\Cpp\Vetuscoin\Vetuscoin\include\core\block.cpp" />
-    <ClCompile Include="D:\Development\Cpp\Vetuscoin\Vetuscoin\include\core\transaction.cpp" />
-    <ClCompile Include="D:\Development\Cpp\Vetuscoin\Vetuscoin\include\crypto\ecdsa.cpp" />
+    <ClCompile Include="D:\Development\Cpp\Siliqua\Siliqua\src\Siliqua.cpp" />
+    <ClCompile Include="D:\Development\Cpp\Siliqua\Siliqua\include\core\block.cpp" />
+    <ClCompile Include="D:\Development\Cpp\Siliqua\Siliqua\include\core\transaction.cpp" />
+    <ClCompile Include="D:\Development\Cpp\Siliqua\Siliqua\include\crypto\ecdsa.cpp" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <ProjectReference Include="D:\Development\Cpp\Vetuscoin\Vetuscoin\ZERO_CHECK.vcxproj">
+    <ProjectReference Include="D:\Development\Cpp\Siliqua\Siliqua\ZERO_CHECK.vcxproj">
       <Project>{8523FB81-7E9D-345D-96DD-46BD884C25F9}</Project>
       <Name>ZERO_CHECK</Name>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>

@@ -14,7 +14,7 @@
 
 namespace network {
     // Own magic bytes (not Bitcoin's) - so this can never be mistaken for real Bitcoin P2P traffic.
-    inline constexpr std::array<uint8_t, 4> MAGIC_BYTES = { 'V', 'E', 'T', 'U' };
+    inline constexpr std::array<uint8_t, 4> MAGIC_BYTES = { 'S', 'I', 'L', 'Q' };
     inline constexpr size_t COMMAND_SIZE = 12;
     inline constexpr size_t HEADER_SIZE = 4 /* magic */ + COMMAND_SIZE + 4 /* length */ + 4 /* checksum */;
     inline constexpr uint32_t MAX_PAYLOAD_SIZE = 4 * 1024 * 1024; // guard against a bad/hostile length field

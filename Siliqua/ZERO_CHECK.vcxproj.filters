@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <CustomBuild Include="D:\Development\Cpp\Vetuscoin\Vetuscoin\CMakeFiles\35c086f5cd431c84fd173970cd66b8a0\generate.stamp.rule">
+    <CustomBuild Include="D:\Development\Cpp\Siliqua\Siliqua\CMakeFiles\35c086f5cd431c84fd173970cd66b8a0\generate.stamp.rule">
       <Filter>CMake Rules</Filter>
     </CustomBuild>
   </ItemGroup>

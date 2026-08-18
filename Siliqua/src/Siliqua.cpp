@@ -1,6 +1,4 @@
-﻿// Vetuscoin.cpp: определяет точку входа для приложения.
-//
-#include "Vetuscoin.h"
+﻿#include "Siliqua.h"
 using namespace crypto;
 using namespace transaction;
 using namespace block;
@@ -12,7 +10,7 @@ int main(int argc, char* argv[])
 {
     std::vector<std::string> args(argv + 1, argv + argc);
 
-    // ./Vetuscoin --seed <path>                        - mine a fresh genesis-only chain and save it.
+    // ./Siliqua --seed <path>                        - mine a fresh genesis-only chain and save it.
     // The genesis coinbase pays an all-zero placeholder address (nobody's wallet), so the seed
     // chain stays neutral - every node that copies it starts equally unable to spend it, and
     // real balances only start accruing from each node's own first --listen run onward.
@@ -21,7 +19,7 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    // ./Vetuscoin --listen <port> [chain_path]          - extend chain_path by one block, serve it to one peer.
+    // ./Siliqua --listen <port> [chain_path]          - extend chain_path by one block, serve it to one peer.
     if (args.size() >= 2 && args[0] == "--listen") {
         uint16_t port = static_cast<uint16_t>(std::stoi(args[1]));
         std::string chain_path = args.size() >= 3 ? args[2] : "chain.dat";
@@ -29,7 +27,7 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    // ./Vetuscoin --connect <host> <port> [chain_path]  - fetch a block and, if valid, append it to chain_path.
+    // ./Siliqua --connect <host> <port> [chain_path]  - fetch a block and, if valid, append it to chain_path.
     if (args.size() >= 3 && args[0] == "--connect") {
         std::string host = args[1];
         uint16_t port = static_cast<uint16_t>(std::stoi(args[2]));
@@ -38,14 +36,14 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    // ./Vetuscoin --address <chain_path>                - print this node's wallet address (Base58Check).
+    // ./Siliqua --address <chain_path>                - print this node's wallet address (Base58Check).
     if (args.size() >= 2 && args[0] == "--address") {
         wallet::Wallet w = load_or_create_wallet(args[1] + ".wallet");
         std::println("{}", wallet::encode_address(w.Address()));
         return 0;
     }
 
-    // ./Vetuscoin --balance <chain_path>                - print this node's spendable UTXOs and total.
+    // ./Siliqua --balance <chain_path>                - print this node's spendable UTXOs and total.
     if (args.size() >= 2 && args[0] == "--balance") {
         wallet::Wallet w = load_or_create_wallet(args[1] + ".wallet");
         UtxoSet owned = filter_utxos_by_address(build_utxo_set(load_chain(args[1])), w.Address());
@@ -57,7 +55,7 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    // ./Vetuscoin --send <host> <port> <chain_path> <recipient_address> <amount>
+    // ./Siliqua --send <host> <port> <chain_path> <recipient_address> <amount>
     //                                                    - sign a spend from chain_path's wallet
     //                                                      (paying network::DEFAULT_FEE) and send
     //                                                      it to a peer's mempool.
@@ -71,7 +69,7 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    // ./Vetuscoin --receive-tx <port> <chain_path>       - accept one TX from a peer into the mempool.
+    // ./Siliqua --receive-tx <port> <chain_path>       - accept one TX from a peer into the mempool.
     if (args.size() >= 3 && args[0] == "--receive-tx") {
         uint16_t port = static_cast<uint16_t>(std::stoi(args[1]));
         std::string chain_path = args[2];
@@ -79,7 +77,7 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    // ./Vetuscoin --daemon <port> <chain_path> [host:port ...]
+    // ./Siliqua --daemon <port> <chain_path> [host:port ...]
     //                                                    - run forever: accept any number of
     //                                                      peers, mine and sync with any listed
     //                                                      known peers every few seconds.

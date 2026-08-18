@@ -16,7 +16,7 @@
 namespace wallet {
     inline constexpr char BASE58_ALPHABET[] = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
-    // Own version byte, distinct from real Bitcoin's (0x00 for mainnet P2PKH) - so a Vetuscoin
+    // Own version byte, distinct from real Bitcoin's (0x00 for mainnet P2PKH) - so a Siliqua
     // address is never visually mistaken for a real Bitcoin one.
     constexpr uint8_t ADDRESS_VERSION_BYTE = 0x1E;
 
@@ -116,10 +116,10 @@ namespace wallet {
     inline std::array<uint8_t, ADDRESS_SIZE> decode_address(const std::string& text) {
         std::vector<uint8_t> decoded = base58_decode(text);
         if (decoded.size() != 1 + ADDRESS_SIZE + 4) {
-            throw std::invalid_argument("decode_address: wrong length for a Vetuscoin address");
+            throw std::invalid_argument("decode_address: wrong length for a Siliqua address");
         }
         if (decoded[0] != ADDRESS_VERSION_BYTE) {
-            throw std::invalid_argument("decode_address: not a Vetuscoin address (wrong version byte)");
+            throw std::invalid_argument("decode_address: not a Siliqua address (wrong version byte)");
         }
 
         std::vector<uint8_t> payload(decoded.begin(), decoded.end() - 4);
