@@ -1,5 +1,5 @@
 # Siliqua
-**Siliqua - C++ Bitcoin-like blockchain прототип** с реализацией UTXO, Proof-of-Work, P2PKH-скриптов, secp256k1-подписей и бинарного P2P-протокола на чистом C++23.
+**Siliqua - C++ Bitcoin-like blockchain прототип** с реализацией UTXO, Proof-of-Work, P2PKH-скриптов, secp256k1-подписей и бинарного P2P-протокола на чистом C++23.<br>
 **Siliqua is the Bitcoin-like blockchain prototype** with implementation of UTXO, Proof-of-Work, P2PKH scripts, secp256k1 signatures, and a binary P2P protocol in plain C++23.
 
 **Язык/Language:** 🇷🇺 [Русский](#русский) · 🇬🇧 [English](#english) · 👤 [Об авторе / About](#contact-me)
