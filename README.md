@@ -2,23 +2,12 @@
 **Siliqua - Bitcoin-like blockchain прототип** с реализацией UTXO, Proof-of-Work, P2PKH-скриптов, secp256k1-подписей и бинарного P2P-протокола на чистом C++23.<br><br>
 **Siliqua is the Bitcoin-like blockchain prototype** with implementation of UTXO, Proof-of-Work, P2PKH scripts, secp256k1 signatures, and a binary P2P protocol in plain C++23.
 
-**Язык/Language:** 🇷🇺 [Русский](#русский) · 🇬🇧 [English](#english) · 👤 [Об авторе / About](#contact-me)
+👤 [Об авторе / About](#contact-me)
 
-Полная документация также доступна отдельными файлами в [`Siliqua/docs/`](Siliqua/docs/): [ARCHITECTURE.ru.md](Siliqua/docs/ARCHITECTURE.ru.md) и **живые интерактивные HTML-схемы** через GitHub Pages: [architecture.ru.html](https://crypt0xCode.github.io/Siliqua/architecture.ru.html).
-The full write-up is also available as standalone files in [`Siliqua/docs/`](Siliqua/docs/): [ARCHITECTURE.en.md](Siliqua/docs/ARCHITECTURE.en.md), and **live interactive HTML diagrams** served via GitHub Pages: [architecture.en.html](https://crypt0xCode.github.io/Siliqua/architecture.en.html).
-
----
-
-## Русский
-
-Полная документация на русском языке не дублируется здесь, чтобы README оставался читаемым — она доступна отдельно:
-- [ARCHITECTURE.ru.md](Siliqua/docs/ARCHITECTURE.ru.md) — полный текст (чек-лист, все 12 глав, диаграммы Mermaid)
-- [architecture.ru.html](https://crypt0xCode.github.io/Siliqua/architecture.ru.html) — интерактивная HTML-схема
+Полная документация на русском языке доступна отдельными файлами в [`Siliqua/docs/`](Siliqua/docs/): [ARCHITECTURE.ru.md](Siliqua/docs/ARCHITECTURE.ru.md) и **живые интерактивные HTML-схемы** через GitHub Pages: [architecture.ru.html](https://crypt0xCode.github.io/Siliqua/architecture.ru.html).
+The full english documentation is also available as standalone files in [`Siliqua/docs/`](Siliqua/docs/): [ARCHITECTURE.en.md](Siliqua/docs/ARCHITECTURE.en.md), and **live interactive HTML diagrams** served via GitHub Pages: [architecture.en.html](https://crypt0xCode.github.io/Siliqua/architecture.en.html).
 
 ---
-
-## English
-
 #### Cryptography and addresses
 * Keypair generation based on the secp256k1 library: seckey/pubkey/compressed pubkey.<br>
 * ECDSA signing and signature verification.<br>
@@ -668,7 +657,7 @@ endif()
 ---
 
 ### Contact Me
-*English*: I'm ready to working together in Web3 and develop blockchain technology with a big pleasure! If you want to test Siliqua blockchain with me, please, contact by links below.<br>
+*English*: I'm ready to working together in Web3 and develop blockchain technology with a big pleasure! If you want to test Siliqua blockchain with me, please, contact by links below.<br><br>
 *Russian*: я готов работать вместе в Web3 и развивать технологию блокчейна с большим удовольствием! Если Вы хотите протестировать блокчейн Siliqua вместе со мной, пожалуйста, свяжитесь по ссылкам ниже.<br>
 
 **Telegram:** [click](https://t.me/crypt0xCode)<br>
