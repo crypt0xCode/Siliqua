@@ -1,133 +1,130 @@
-# 📘 Техническая документация блокчейн-платформы «Siliqua»
+# Блокчейн «Siliqua»
 
 *English version: [ARCHITECTURE.en.md](ARCHITECTURE.en.md) · интерактивная HTML-схема: [architecture.ru.html](architecture.ru.html)*
 
-## Чек-лист реализованных возможностей
-
 ### Криптография и адреса
-✅ Генерация keypair (secp256k1): seckey/pubkey/сжатый pubkey
-✅ ECDSA-подпись и верификация подписи
-✅ SHA-256 / двойной SHA-256 / RIPEMD-160 хеширование
-✅ Вывод адреса из pubkey (RIPEMD160(SHA256(pubkey)))
-✅ Base58Check-кодирование адресов (собственный version byte 0x1E)
+* Генерация keypair на основе библиотеки secp256k1: seckey/pubkey/сжатый pubkey.<br>
+* ECDSA-подпись и верификация подписи.<br>
+* SHA-256, double SHA-256, RIPEMD-160 хеширования.<br>
+* Base58Check-кодирование адресов (собственный version byte 0x1E).<br>
 
-### Ядро цепи (core)
-✅ Структуры транзакции: COutPoint, CTxIn, CTxOut, Transaction
-✅ Двойной SHA-256 хеш транзакции и блока (GetHash)
-✅ Сериализация/десериализация транзакций и блоков в бинарный формат
-✅ Merkle Root и его проверка (IsMerkleRootValid)
-✅ UTXO-модель (unordered_map<COutPoint, CTxOut> для O(1)-поиска)
+### Ядро цепи
+* Структуры транзакции: COutPoint, CTxIn, CTxOut, Transaction.<br>
+* Double SHA-256 хеш транзакции и блока (GetHash).<br>
+* Сериализация, десериализация транзакций и блоков в бинарный формат.<br>
+* Merkle Root и его проверка (IsMerkleRootValid).<br>
+* UTXO-модель (unordered_map<COutPoint, CTxOut>).<br>
 
 ### Консенсус и экономика
-✅ Proof-of-Work: компактный target (nBits) ↔ 256-битный target
-✅ Майнинг блока (перебор nNonce, роллинг nTime при переполнении)
-✅ Ретаргет сложности (аналог правила Bitcoin, клампинг [0.25x, 4x])
-✅ Расчёт суммарной работы цепи (chain work) для выбора форка
-✅ Полная валидация цепи с нуля (validate_full_chain)
-✅ Комиссии (fee) как разница между суммой входов и выходов
-✅ Halving награды за блок (аналог 210 000 блоков Bitcoin, уменьшенный масштаб)
+* Proof-of-Work: конвертация компактного target nBits в 256-битный target.<br>
+* Майнинг блока (перебор nNonce, роллинг nTime при переполнении).<br>
+* Изменение сложности добычи (аналог правила Bitcoin, клампинг [0.25x, 4x]).<br>
+* Расчёт суммарной работы цепи (chain work) для выбора форка.<br>
+* Полная валидация цепи с нуля (validate_full_chain).<br>
+* Комиссии (fee) как разница между суммой входов и выходов.<br>
+* Halving награды за блок (аналог 210 000 блоков Bitcoin в упрощенном виде).<br>
 
 ### Скрипты и кошелёк
-✅ P2PKH scriptPubKey / scriptSig (OP_DUP, OP_HASH160, OP_EQUALVERIFY, OP_CHECKSIG)
-✅ Стековая машина выполнения скриптов (script::evaluate)
-✅ Класс Wallet: хранение ключей, адрес, сборка и подпись транзакций
-✅ Выбор UTXO (greedy) с формированием сдачи и dust-порогом
+* P2PKH scriptPubKey, scriptSig (OP_DUP, OP_HASH160, OP_EQUALVERIFY, OP_CHECKSIG).<br>
+* Стековая машина выполнения скриптов (script::evaluate).<br>
 
 ### Сетевой протокол (P2P)
-✅ Собственный бинарный протокол поверх TCP (magic bytes "SILQ")
-✅ Кадрирование сообщений: magic + команда + длина + checksum
-✅ Команды: VERSION, VERACK, INV, GETDATA, BLOCK, TX, GETBLOCKS, CHAIN
-✅ Класс Peer (RAII-обёртка сокета)
-✅ Кроссплатформенные сокеты (Winsock/POSIX) через единый интерфейс
+* Собственный бинарный протокол поверх TCP (magic bytes "SILQ" от Siliqua).<br>
+* Кадрирование сообщений: magic + команда + длина + checksum.<br>
+* Команды: VERSION, VERACK, INV, GETDATA, BLOCK, TX, GETBLOCKS, CHAIN.<br>
+* Кроссплатформенные сокеты (Winsock/POSIX) через единый интерфейс.<br>
 
 ### Узел (Node) и демон
-✅ Разовые CLI-операции: run_listener, run_connector, run_send_tx, run_receive_tx
-✅ Постоянный многопоточный демон (network::Node): AcceptLoop, MiningLoop, PeerPollLoop
-✅ Мемпул с ограничением размера (MAX_MEMPOOL_SIZE)
-✅ Приём и валидация чужих блоков, продолжение цепи (try_extend_chain)
-✅ Разрешение форков по суммарной работе (try_reorg), а не по длине цепи
-✅ Мультипир-режим демона (список известных пиров, периодическая синхронизация)
+* Разовые CLI-операции: run_listener, run_connector, run_send_tx, run_receive_tx.<br>
+* Постоянный многопоточный демон (network::Node): AcceptLoop, MiningLoop, PeerPollLoop.<br>
+* Mempool с ограничением размера (MAX_MEMPOOL_SIZE).<br>
+* Приём и валидация чужих блоков, продолжение цепи (try_extend_chain).<br>
+* Разрешение форков по суммарной работе (try_reorg), а не по длине цепи.<br>
+* Мультипир-режим демона (список известных пиров, периодическая синхронизация).<br>
 
 ### Хранилище
-✅ Бинарная (де)сериализация всей цепи в файл
-✅ Персистентность UTXO-сета в файл
-✅ Персистентность мемпула в файл
-✅ Персистентность кошелька (seckey) в файл, восстановление между запусками
+* Бинарная (де)сериализация всей цепи в файл.<br>
+Персистентность:<br>
+* UTXO-сета в файл;<br>
+* мемпула в файл;<br>
+* кошелька (seckey) в файл, восстановление между запусками.<br>
 
-### CLI
-✅ `--seed`, `--listen`, `--connect`, `--address`, `--balance`, `--send`, `--receive-tx`, `--daemon`
+### CLI (в [Главе 11](#глава-11-CLI-команды-и-сценарий-из-двух-узлов) представлен пример использования команд)
+✅ `--seed <path>` - единоразово намайнить «пустую» genesis-цепь (только блок 0) и сохранить её в файл. Награда за genesis уходит на нейтральный нулевой адрес, которым никто не владеет, так каждый узел, скопированный этот файл, стартует с одинаковой метки.<br>
+✅ `--listen <port> [chain_path]` - смайнить один новый блок поверх своей текущей цепи, затем слушать TCP-порт и обслужить одного подключившегося клиента (пира): провести handshake и отдать ему этот новый блок.<br>
+✅ `--connect <host> <port> [chain_path]` - подключиться к пиру (к узлу, запущенному с --listen), забрать у него блок и, если он валиден и продолжает свою цепь, добавить в chain_path. Если блок не продолжает свой тип, узел вместо отказа запросит у пира всю цепь и сравнит суммарную работу (правило разрешения форков).<br>
+✅ `--address <chain_path>` - напечатать в консоль Base58Check-адрес кошелька этого узла (загружает или создаёт <chain_path>.wallet).<br>
+✅ `--balance <chain_path>` - напечатать список своих не потраченных UTXO и их сумму в сатоши (sats).<br>
+✅ `--send <host> <port> <chain_path> <address> <sum>` - собрать и подписать транзакцию, тратящую собственные UTXO узла (плюс фиксированная комиссия DEFAULT_FEE), и отправить её пиру. Пир кладет ее к себе в mempool.<br>
+✅ `--receive-tx <port> <chain_path>` - слушать порт, принять от пира ровно одну транзакцию, проверить её подпись, UTXO и, если она валидна, добавить в свой mempool (транзакация будет ждать следующего запуска --listen, чтобы попасть в блок).<br>
+✅ `--daemon <port> <chain_path> [host:port]` - запустить постоянно работающий узел (network::Node). В отличие от всех команд выше, он не завершается после одного пира или одной операции. Демон принимает сколько угодно подключений одновременно, майнит блоки по таймеру (раз в 5 сек) и сам синхронизируется со списком известных пиров (фактически имеет функционал всех перечисленных выше команд).<br>
 
 ### Сборка
-✅ Кроссплатформенный CMake (Windows/Linux/macOS), C++23
-✅ Поиск secp256k1 и Crypto++ через pkg-config / vcpkg-style libs
-✅ Оптимизация под слабое/старое железо (-O2 вместо -O3)
+* Кроссплатформенный CMake (Windows/Linux/macOS), C++23.<br>
+* Поиск secp256k1 и Crypto++ через pkg-config, vcpkg-style.<br>
+* Оптимизация под слабое, старое железо (проведено несколько тестов с эмуляцией i486 32-bit).
 
 ---
 
 ## Глава 1: Введение
 
 ### Название проекта
-Siliqua — прототип одноранговой (P2P) блокчейн-платформы в духе Bitcoin, написанный на чистом C++ без внешних блокчейн-фреймворков.
+Siliqua — прототип однорангового (P2P) блокчейна Bitcoin-like, написанный C++ без внешних блокчейн-фреймворков.
 
 ### Цель проекта
 Воспроизвести ключевые архитектурные и алгоритмические паттерны Bitcoin (UTXO, Proof-of-Work, P2P-протокол, скрипты, halving, комиссии) в компактной, читаемой кодовой базе, оптимизированной для запуска на слабом/старом оборудовании.
 
 ### Технологический стек
 
-| Компонент             | Технологии                                                         |
-| ---------------------- | ------------------------------------------------------------------- |
-| Язык / стандарт        | C++23                                                                |
-| Криптография (ECDSA)   | libsecp256k1                                                        |
-| Хеширование            | picosha2 (SHA-256), Crypto++ (RIPEMD-160)                           |
-| Сеть                   | сырые TCP-сокеты (POSIX / Winsock), собственный бинарный протокол   |
-| Логирование            | spdlog                                                               |
-| Сборка                 | CMake ≥ 3.15, кроссплатформенно (Windows / Linux / macOS)            |
-| Хранилище              | плоские бинарные файлы (chain.dat, *.wallet, *.mempool)             |
+| Компонент            | Технологии                                                       |
+|----------------------|------------------------------------------------------------------|
+| Язык                 | C++23                                                            |
+| Криптография (ECDSA) | libsecp256k1                                                     |
+| Хеширование          | picosha2 (SHA-256), Crypto++ (RIPEMD-160)                        |
+| Сеть                 | "сырые" TCP-сокеты (POSIX, Winsock), собственный бинарный протокол |
+| Поддержка платформ   | CMake ≥ 3.15, кроссплатформенность (Windows, Linux, macOS)       |
+| Хранилище            | "сырые" бинарные файлы (chain.dat, *.wallet, *.mempool)            |
 
 ### Основные функции платформы
-- Генерация кошелька (keypair secp256k1) и Base58Check-адреса
-- Отправка и приём подписанных транзакций с комиссией
-- Майнинг блоков с Proof-of-Work и наградой за блок (с halving)
-- Проверка входящих блоков и транзакций (подписи, UTXO, суммы)
-- Разрешение форков по суммарной работе цепи (а не по длине)
-- Постоянно работающий узел (демон), синхронизирующийся с несколькими пирами
-- Персистентность цепи, UTXO, мемпула и кошелька между запусками
+- Генерация кошелька (keypair secp256k1) и Base58Check-адреса.<br>
+- Отправка и приём подписанных транзакций с комиссией.<br>
+- Майнинг блоков с Proof-of-Work и наградой за блок (с halving).<br>
+- Проверка входящих блоков и транзакций (подписи, UTXO, суммы).<br>
+- Разрешение форков по суммарной работе цепи, а не по длине.<br>
+- Постоянно работающий узел (демон), синхронизирующийся с несколькими пирами.<br>
+- Персистентность цепи, UTXO, mempool'а и кошелька между запусками.
 
 ### Пройденные этапы разработки
 На основе истории коммитов репозитория:
 
-| Этап                                       | Ключевые результаты |
-| -------------------------------------------- | -------------------- |
-| Инициализация проекта, кроссплатформенный CMake | Windows/Linux/macOS сборка |
-| Криптографический слой                     | ECDSA (seckey/pubkey/подпись/верификация), генерация адреса |
-| Ядро: транзакции и блоки                   | COutPoint/CTxIn/CTxOut, CBlockHeader/CBlock, Merkle Root |
-| Consensus: Proof-of-Work                   | compact target ↔ 256-бит, майнинг, проверка PoW |
-| Персистентность                            | сериализация/десериализация цепи и UTXO в файлы |
-| P2P-протокол                               | сообщения, рукопожатие VERSION/VERACK, сокеты |
-| Первый обмен блоками между узлами          | Listener/Connector, генератор тестовых транзакций |
-| Кошельки и подписи                         | класс Wallet, генератор уникальных кошельков, отдельные UTXO по адресам |
-| Экономика сети                             | комиссии, halving, лимит мемпула |
-| Реальные скрипты Bitcoin                   | scriptPubKey/scriptSig, стековая машина P2PKH |
-| Мультипир-демон                            | многопоточный Node (Accept/Mining/PeerPoll), Base58-адреса |
+| Этап                                            | Ключевые результаты |
+|-------------------------------------------------| -------------------- |
+| Инициализация проекта, кроссплатформенный CMake | Windows, Linux, macOS сборка |
+| Криптографический слой                          | ECDSA (seckey, pubkey, подпись, верификация), генерация адреса |
+| Ядро: транзакции и блоки                        | COutPoint, CTxIn, CTxOut, CBlockHeader, CBlock, Merkle Root |
+| Consensus: Proof-of-Work                        | compact target ↔ 256-бит, майнинг, проверка PoW |
+| Персистентность                                 | сериализация, десериализация цепи и UTXO в файлы |
+| P2P-протокол                                    | сообщения, рукопожатие VERSION, VERACK, сокеты |
+| Первый обмен блоками между узлами               | Listener, Connector, генератор тестовых транзакций |
+| Кошельки и подписи                              | класс Wallet, генератор уникальных кошельков, отдельные UTXO по адресам |
+| Экономика сети                                  | комиссии, halving, лимит мемпула |
+| Реальные скрипты Bitcoin                        | scriptPubKey, scriptSig, стековая машина P2PKH |
+| Мультипир демон                                 | многопоточный Node (Accept, Mining, PeerPoll), Base58-адреса |
 
 ---
 
 ## Глава 2: Архитектурная схема
-
-Прототип блокчейна в духе Bitcoin: собственный формат блоков и транзакций, Proof-of-Work с ретаргетом сложности, UTXO-модель со скриптами P2PKH, secp256k1-подписи и бинарный P2P-протокол поверх сырых TCP-сокетов — без единой внешней ноды или блокчейн-фреймворка.
-
 ### Компоненты системы
-- **CLI (`Siliqua.cpp`):** разбор флагов запуска, диспетчеризация на разовые операции или демон.
-- **`network::Node` (демон, `daemon.h`):** три потока — приём пиров, майнинг по таймеру, опрос известных пиров, общая цепь под `std::mutex`.
-- **Consensus (`consensus/pow.h`):** compact target, майнинг, ретаргет сложности, суммарная работа цепи.
-- **Core (`core/block.h`, `core/transaction.h`):** структуры блока и транзакции, Merkle Root, UTXO-сет.
-- **Wallet (`wallet/*.h`):** ключи, адреса (Base58Check), сборка и подпись транзакций, P2PKH-скрипты.
-- **Crypto (`crypto/ecdsa.h`):** обёртка над secp256k1 и хеш-функциями.
-- **Network (`network/*.h`):** кадрирование сообщений, TCP-сокеты, класс `Peer`.
-- **Storage (`storage/storage.h`):** бинарная персистентность цепи/UTXO/мемпула/кошелька в файлы.
+- **CLI (`Siliqua.cpp`):** разбор флагов запуска, диспетчеризация на разовые операции или демон.<br>
+- **`network::Node` (демон, `daemon.h`):** приём пиров, майнинг по таймеру, опрос известных пиров, общая цепь под `std::mutex`.<br>
+- **Consensus (`consensus/pow.h`):** конвертация target, майнинг, изменение сложности майнинга, суммарная работа цепи.<br>
+- **Core (`core/block.h`, `core/transaction.h`):** структуры блока и транзакции, Merkle Root, UTXO-сет.<br>
+- **Wallet (`wallet/*.h`):** ключи, адреса (Base58Check), сборка и подпись транзакций, P2PKH-скрипты.<br>
+- **Crypto (`crypto/ecdsa.h`):** обёртка над secp256k1 и хеш-функциями.<br>
+- **Network (`network/*.h`):** кадрирование сообщений, TCP-сокеты (POSIX, Windows).<br>
+- **Storage (`storage/storage.h`):** бинарная персистентность цепи, UTXO, mempool'a, кошелька в файлы.<br>
 
 ### Граф зависимостей и потоков управления
-
 ```mermaid
 flowchart TB
   CLI["Siliqua.cpp<br/>--seed --listen --connect<br/>--send --receive-tx --daemon<br/>--address --balance"]
@@ -178,24 +175,10 @@ flowchart TB
   TX -->|UTXO-проверка входов| STORE
   SCR -->|scriptSig + scriptPubKey| TX
 ```
+**Легенда:** узлы - модули, классы кодовой базы; сплошные стрелки - прямые вызовы или зависимости; пунктирная стрелка `-->|label|` - проверка (сверка) данных между слоями; прямоугольник-цилиндр - файл на диске.
 
-**Легенда:** узлы — модули/классы кодовой базы; сплошные стрелки — прямые вызовы/зависимости; пунктирная стрелка `-->|label|` — проверка/сверка данных между слоями; прямоугольник-цилиндр — файл на диске.
-
-### Модули по слоям
-
-| Файл                          | Слой                    | Что делает |
-| ------------------------------- | ------------------------ | ------------ |
-| `consensus/pow.h`               | Proof-of-Work            | Компактная сложность → 256-битный таргет, майнинг перебором nNonce, ретаргет каждые 5 блоков (цель — 60с), суммарная работа цепи для выбора форка. |
-| `core/block.h` · `transaction.h`| Блоки и UTXO             | Заголовок из 6 полей, double-SHA256 хеш, Merkle Root по транзакциям; UTXO — `unordered_map<COutPoint, CTxOut>` для O(1)-поиска входов. |
-| `wallet/script.h`               | Скрипты P2PKH            | Стековая машина на 4 опкодах (DUP, HASH160, EQUALVERIFY, CHECKSIG) — тот же принцип, что и в реальном Bitcoin Script, но только необходимый минимум. |
-| `wallet/base58.h`               | Адреса Base58Check       | RIPEMD160(SHA256(pubkey)) + версия-байт 0x1E + 4-байтная контрольная сумма — собственный префикс, отличный от настоящего Bitcoin. |
-| `network/message.h`             | Кадрирование сообщений   | Magic `SILQ` + команда (12 байт) + длина + 4-байтная checksum (double-SHA256 payload) — защита от чужого и повреждённого трафика. |
-| `network/daemon.h`              | Постоянный узел          | Три потока вокруг одной цепи под `std::mutex`: приём пиров, майнинг по таймеру, опрос известных пиров — без внешнего планировщика. |
-
-### Рукопожатие и обмен блоком между двумя узлами
-
+### Handshake и обмен блоком между двумя узлами
 Тот же цикл запросов, что использует `run_connector`: если полученный блок не продолжает собственный тип цепи, узел не отбрасывает его сразу — запрашивает всю цепь пира и сравнивает суммарную работу (правило Bitcoin: побеждает не самая длинная цепь, а цепь с наибольшей работой).
-
 ```mermaid
 sequenceDiagram
     participant A as Узел A (Connector)
@@ -216,14 +199,7 @@ sequenceDiagram
         A->>A: validate_full_chain +<br/>сравнение суммарной работы
     end
 ```
-
-### Основные модули-«контроллеры»
-- **`network::Node` (`daemon.h`):** постоянный демон — приём соединений, майнинг, синхронизация с пирами.
-- **`run_listener` / `run_connector` (`node.h`):** разовый обмен одним блоком между двумя узлами (используется CLI-флагами `--listen`/`--connect`).
-- **`run_send_tx` / `run_receive_tx` (`node.h`):** отправка подписанной транзакции пиру / приём транзакции в мемпул.
-- **`storage::*` (`storage.h`):** сохранение и загрузка цепи, UTXO-сета, мемпула.
-
-Полная таблица экономических констант, показанных на диаграммах, — в [Главе 10](#глава-10-экономика-и-лимиты-сети).
+Полная таблица экономических констант, показанных на диаграммах, находится в [Главе 10](#глава-10-экономика-и-лимиты-сети).
 
 ---
 
@@ -266,7 +242,7 @@ inline std::string encode_address(const std::array<uint8_t, ADDRESS_SIZE>& addre
     return base58_encode(payload);
 }
 ```
-`decode_address()` — обратная операция, с проверкой версии и контрольной суммы (бросает исключение при опечатке).
+`decode_address()` - обратная операция с проверкой версии и контрольной суммы (бросает исключение при опечатке).
 
 ### Подпись сообщений (`wallet/signing.h`)
 ```cpp
@@ -277,31 +253,23 @@ std::vector<uint8_t> sign_raw(const unsigned char seckey[32], const std::array<u
 bool verify_raw_signature(const std::vector<uint8_t>& sig_bytes,
     const std::vector<uint8_t>& pubkey_bytes, const std::array<uint8_t, 32>& sighash);
 ```
-Подписывается хеш транзакции, посчитанный **при всех пустых `scriptSig`** (аналог `SIGHASH_ALL` в Bitcoin) — подпись не может зависеть от собственных байт.
+Подписывается хеш транзакции, посчитанный **при всех пустых `scriptSig`** (аналог `SIGHASH_ALL` в Bitcoin; подпись не может зависеть от собственных байт).
 
 ---
 
 ## Глава 4: Транзакции и UTXO-модель
-
 ### Структуры (`core/transaction.h`)
-
-| Структура     | Поля                                               | Назначение                              |
-| ------------- | ---------------------------------------------------- | ----------------------------------------- |
+| Структура     | Поля                                               | Назначение                               |
+| ------------- | ---------------------------------------------------- |------------------------------------------|
 | `COutPoint`   | `txid[32]`, `n`                                       | указатель на конкретный выход прошлой tx |
-| `CTxIn`       | `prevout`, `scriptSig`, `nSequence`                   | вход — тратит один UTXO                  |
-| `CTxOut`      | `nValue` (сатоши), `scriptPubKey`                     | выход — новый неподтверждённый остаток   |
+| `CTxIn`       | `prevout`, `scriptSig`, `nSequence`                   | вход (тратит один UTXO)                  |
+| `CTxOut`      | `nValue` (сатоши), `scriptPubKey`                     | выход (новый неподтверждённый остаток)   |
 | `Transaction` | `nVersion`, `vin`, `vout`, `nLockTime`, `tx_hash`     | вся транзакция                           |
-
-```cpp
-// outpoint -> unspent output. O(1)-поиск вместо O(log n) у std::map —
-// именно эта структура сильнее всего нагружается по мере роста цепи.
-using UtxoSet = std::unordered_map<COutPoint, CTxOut, COutPointHash>;
-```
 
 ### Хеш и Coinbase
 ```cpp
 std::array<uint8_t, 32> Transaction::GetHash() const;  // двойной SHA-256 сериализованной tx
-bool Transaction::IsCoinbase() const;                    // первая tx в блоке — награда майнеру
+bool Transaction::IsCoinbase() const;                  // проверка на coinbase (первую транзакцию в блоке, которая дает награду майнеру)
 ```
 
 ### Построение UTXO-сета из всей цепи (`network/node.h`)
@@ -341,7 +309,6 @@ inline int64_t validate_and_get_fee(const transaction::Transaction& tx, const tr
 ---
 
 ## Глава 5: Блоки и Proof-of-Work
-
 ### Заголовок блока (`core/block.h`)
 ```cpp
 struct CBlockHeader {
@@ -352,7 +319,7 @@ struct CBlockHeader {
     uint32_t nBits;   // компактный target
     uint32_t nNonce;
 
-    std::array<uint8_t, 32> GetHash() const; // двойной SHA-256
+    std::array<uint8_t, 32> GetHash() const;
 };
 
 class CBlock : public CBlockHeader {
@@ -364,8 +331,8 @@ public:
 };
 ```
 
-### Compact target ↔ 256-бит (`consensus/pow.h`)
-Верхний байт `nBits` — экспонента (длина в байтах), младшие 3 байта — мантисса. Та же схема, что и в Bitcoin:
+### Compact target => 256 бит (`consensus/pow.h`)
+Верхний байт `nBits` - экспонента (длина в байтах), младшие 3 байта - мантисса, как и в Bitcoin:
 ```cpp
 inline std::array<uint8_t, 32> bits_to_target(uint32_t bits);
 inline bool check_proof_of_work(const block::CBlockHeader& header); // hash <= target
@@ -378,8 +345,7 @@ constexpr uint32_t RETARGET_INTERVAL = 5;         // блоков между п�
 constexpr uint32_t TARGET_TIMESPAN_SECONDS = 60;  // ожидаемое время на интервал
 constexpr uint32_t INITIAL_BITS = 0x207fffff;
 
-// actual_timespan клампится в [target/4, target*4] — всплеск быстрых/медленных
-// блоков не может сдвинуть сложность больше чем в 4 раза за один ретаргет.
+// actual_timespan клампится в [target/4, target*4] — всплеск быстрых/медленных блоков не может сдвинуть сложность больше чем в 4 раза за один ретаргет.
 uint32_t get_next_work_required(const std::vector<block::CBlockHeader>& headers,
     uint32_t retarget_interval, uint32_t target_timespan_seconds);
 ```
@@ -389,12 +355,12 @@ uint32_t get_next_work_required(const std::vector<block::CBlockHeader>& headers,
 double calculate_block_work(uint32_t nBits);              // 2^256 / target
 double calculate_chain_work(const std::vector<block::CBlockHeader>& headers);
 ```
-Ключевое правило Bitcoin, воспроизведённое здесь: побеждает цепь с наибольшей **суммарной работой** (`try_reorg` в `node.h`), а не просто более длинная — обычно это совпадает, но не всегда.
+Ключевое правило Bitcoin, воспроизведённое здесь: побеждает цепь с наибольшей **суммарной работой** (`try_reorg` в `node.h`), а не просто более длинная. Обычно это совпадает, но не всегда.
 
 ### Награда за блок и halving (`network/node.h`)
 ```cpp
 constexpr int64_t INITIAL_REWARD = 5000000000; // 50 монет, блок 0
-constexpr uint32_t HALVING_INTERVAL = 10;       // блоков на halving (для наглядности теста)
+constexpr uint32_t HALVING_INTERVAL = 10;      // блоков на halving (для наглядности теста)
 
 inline int64_t calculate_block_reward(uint32_t height) {
     uint32_t halvings = height / HALVING_INTERVAL;
@@ -427,7 +393,7 @@ std::vector<uint8_t> build_script_sig(const std::vector<uint8_t>& signature, con
 ```
 
 ### Выполнение (стековая машина)
-`scriptSig` и `scriptPubKey` конкатенируются и выполняются как одна программа — так же, как в настоящем Bitcoin. Трата валидна, если на стеке в конце остаётся ровно одно истинное значение:
+`scriptSig` и `scriptPubKey` конкатенируются и выполняются как одна программа, как в настоящем Bitcoin. Трата валидна, если на стеке в конце остаётся ровно одно истинное значение:
 ```cpp
 bool evaluate(const std::vector<uint8_t>& script_sig,
     const std::vector<uint8_t>& script_pubkey, const std::array<uint8_t, 32>& sighash);
@@ -437,9 +403,7 @@ bool evaluate(const std::vector<uint8_t>& script_sig,
 ---
 
 ## Глава 7: Сетевой протокол (P2P)
-
 ### Формат кадра сообщения (`network/message.h`)
-
 | Поле       | Размер     | Описание                                          |
 | ----------- | ---------- | ------------------------------------------------------ |
 | magic       | 4 байта    | `"SILQ"` — не спутать с реальным Bitcoin-трафиком      |
@@ -454,17 +418,16 @@ inline constexpr uint32_t MAX_PAYLOAD_SIZE = 4 * 1024 * 1024; // защита о
 ```
 
 ### Команды протокола
-
 | Команда      | Направление                        | Назначение                                     |
 | ------------- | ------------------------------------ | ------------------------------------------------- |
-| `version`     | инициатор → получатель               | согласование версии протокола                     |
-| `verack`      | получатель → инициатор               | подтверждение рукопожатия                          |
-| `inv`         | listener → connector                 | анонс хеша нового блока                            |
-| `getdata`     | connector → listener                 | запрос блока по хешу                               |
-| `block`       | listener → connector                 | сериализованный блок                               |
-| `tx`          | отправитель → получатель             | подписанная транзакция для мемпула                 |
-| `getblocks`   | connector → listener                 | запрос всей цепи (для разрешения форка)            |
-| `chain`       | listener → connector                 | вся цепь целиком (`storage::serialize_chain`)      |
+| `version`     | инициатор => получатель               | согласование версии протокола                     |
+| `verack`      | получатель => инициатор               | подтверждение рукопожатия                          |
+| `inv`         | listener => connector                 | анонс хеша нового блока                            |
+| `getdata`     | connector => listener                 | запрос блока по хешу                               |
+| `block`       | listener => connector                 | сериализованный блок                               |
+| `tx`          | отправитель => получатель             | подписанная транзакция для мемпула                 |
+| `getblocks`   | connector => listener                 | запрос всей цепи (для разрешения форка)            |
+| `chain`       | listener => connector                 | вся цепь целиком (`storage::serialize_chain`)      |
 
 ### Класс Peer — RAII-обёртка сокета (`network/peer.h`)
 ```cpp
@@ -478,25 +441,20 @@ public:
     bool Receive(Message& out) const;
 };
 ```
-Сокеты кроссплатформенные (`network/socket.h`): Winsock на Windows, стандартные POSIX-сокеты на Linux/macOS через единый интерфейс `create_listener` / `connect_to` / `accept_connection`.
-
 ---
 
 ## Глава 8: Узел — CLI-режимы и постоянный демон
-
 ### Разовые операции (`network/node.h`)
-Каждая функция выполняет ровно один обмен с ровно одним пиром и завершается — удобно для CLI и тестирования:
+Каждая функция выполняет ровно один обмен с ровно одним пиром и завершается:
 
-| Функция              | Что делает                                                                       |
-| ---------------------- | ----------------------------------------------------------------------------------- |
-| `run_listener`         | добывает новый блок поверх своей цепи, слушает порт, обслуживает одного пира       |
-| `run_connector`        | подключается к пиру, забирает блок; если он не продолжает свой тип — запрашивает всю цепь пира и сравнивает суммарную работу |
-| `run_send_tx`          | собирает и подписывает транзакцию из своих UTXO, отправляет пиру в мемпул          |
-| `run_receive_tx`       | принимает одну транзакцию, проверяет подпись/UTXO, кладёт в мемпул                |
+| Функция              | Что делает                                                                                                                  |
+| ---------------------- |-----------------------------------------------------------------------------------------------------------------------------|
+| `run_listener`         | добывает новый блок поверх своей цепи, слушает порт, обслуживает одного пира                                                |
+| `run_connector`        | подключается к пиру, забирает блок; если он не продолжает свой тип, запрашивает всю цепь пира и сравнивает суммарную работу |
+| `run_send_tx`          | собирает и подписывает транзакцию из своих UTXO, отправляет пиру в мемпул                                                   |
+| `run_receive_tx`       | принимает одну транзакцию, проверяет подпись/UTXO, кладёт в мемпул                                                          |
 
 ### Постоянный демон `network::Node` (`network/daemon.h`)
-Те же строительные блоки (`build_next_block`, `try_extend_chain`, `try_reorg`, `validate_and_get_fee`), но работающие непрерывно, а не один раз:
-
 ```cpp
 class Node {
 public:
@@ -522,18 +480,18 @@ bool try_extend_chain(std::vector<block::CBlock>& chain, const block::CBlock& re
 bool try_reorg(std::vector<block::CBlock>& chain, const std::vector<block::CBlock>& peer_chain);
 bool validate_full_chain(const std::vector<block::CBlock>& chain); // с нуля, от genesis
 ```
-Полная последовательность обмена показана на диаграмме в [Главе 2](#глава-2-архитектурная-схема) (рукопожатие и обмен блоком).
+Полная последовательность обмена показана на диаграмме в [Главе 2](#глава-2-архитектурная-схема) (handshake и обмен блоком).
 
 ---
 
 ## Глава 9: Хранилище (`storage/storage.h`)
 
-| Файл                    | Формат                                                                       |
-| ------------------------- | --------------------------------------------------------------------------- |
-| `<chain_path>`             | количество блоков (varint) + `Serialize()` каждого блока подряд             |
-| `<chain_path>.wallet`      | 32 сырых байта seckey                                                       |
-| `<chain_path>.mempool`     | количество tx (varint) + `Serialize()` каждой транзакции подряд             |
-| `<любой>.utxo`             | количество записей (varint) + пары `COutPoint::Serialize()`+`CTxOut::Serialize()` |
+| Файл                   | Формат                                                                       |
+|------------------------| --------------------------------------------------------------------------- |
+| `<chain_path>`         | количество блоков (varint) + `Serialize()` каждого блока подряд             |
+| `<chain_path>.wallet`  | 32 сырых байта seckey                                                       |
+| `<chain_path>.mempool` | количество tx (varint) + `Serialize()` каждой транзакции подряд             |
+| `<any>.utxo`           | количество записей (varint) + пары `COutPoint::Serialize()`+`CTxOut::Serialize()` |
 
 ```cpp
 void save_chain(const std::vector<block::CBlock>& chain, const std::string& path);
@@ -541,8 +499,6 @@ std::vector<block::CBlock> load_chain(const std::string& path);
 void save_mempool(const std::vector<transaction::Transaction>& mempool, const std::string& path);
 std::vector<transaction::Transaction> load_mempool(const std::string& path);
 ```
-Один и тот же `serialize_chain()`/`deserialize_chain()` используется и для файла, и для сетевого сообщения `CHAIN` — один формат, два носителя.
-
 ---
 
 ## Глава 10: Экономика и лимиты сети
@@ -560,53 +516,40 @@ std::vector<transaction::Transaction> load_mempool(const std::string& path);
 | `ADDRESS_VERSION_BYTE`       | `0x1E`             | собственный префикс адреса (не Bitcoin mainnet)               | `wallet/base58.h`       |
 | `MAGIC_BYTES`                | `"SILQ"`           | отличает трафик Siliqua от настоящего Bitcoin P2P              | `network/message.h`     |
 
-Значения намеренно небольшие (halving за 10 блоков, ретаргет за 5) — поведение можно наблюдать за один тестовый прогон, а не за годы, как в реальном Bitcoin.
+Значения намеренно небольшие (halving за 10 блоков, ретаргет за 5): поведение можно наблюдать за один тестовый прогон, а не за годы, как в реальном Bitcoin.
 
 ---
 
-## Глава 11: CLI — команды и сценарий из двух узлов
-
-### Справка по флагам (`src/Siliqua.cpp`)
-
-| Команда                                                          | Назначение                                                        |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `Siliqua --seed <path>`                                              | добыть чистую genesis-цепь (нейтральный адрес) и сохранить         |
-| `Siliqua --listen <port> [chain_path]`                                | добыть блок поверх `chain_path`, обслужить одного пира             |
-| `Siliqua --connect <host> <port> [chain_path]`                        | забрать блок у пира и, если валиден, добавить в `chain_path`       |
-| `Siliqua --address <chain_path>`                                      | напечатать адрес кошелька узла (Base58Check)                       |
-| `Siliqua --balance <chain_path>`                                      | напечатать свои UTXO и их сумму                                    |
-| `Siliqua --send <host> <port> <chain_path> <address> <amount>`        | подписать трату и отправить пиру в мемпул                          |
-| `Siliqua --receive-tx <port> <chain_path>`                            | принять одну транзакцию от пира в мемпул                           |
-| `Siliqua --daemon <port> <chain_path> [host:port ...]`                | запустить постоянный узел с (опционально) известными пирами        |
-
+## Глава 11: CLI, команды и сценарий из двух узлов
+### Справка по флагам (`src/Siliqua.cpp`) указана в разделе [CLI](#cli)
 ### Практический сценарий: два узла, один перевод
 ```bash
-# 1. Узел A сеет genesis-цепь
+# 1. Узел A сеет genesis-цепь.
 ./Siliqua --seed nodeA.dat
 
-# 2. Узел B копирует ТОТ ЖЕ genesis ДО того, как A замайнит следующий блок —
+# 2. Узел B копирует тот же genesis до того, как A замайнит следующий блок:
 #    run_connector требует уже существующую цепь с общим genesis, иначе
 #    первый же полученный блок не свяжется по hashPrevBlock и будет отклонён.
 cp nodeA.dat nodeB.dat
 
-# 3. Узел A добывает блок 1 поверх своей цепи и слушает порт 9000
+# 3. Узел A добывает блок 1 поверх своей цепи и слушает порт 9000.
 ./Siliqua --listen 9000 nodeA.dat &
 
-# 4. Узел B подключается, забирает блок 1 и дописывает его в свою копию цепи
+# 4. Узел B подключается, забирает блок 1 и дописывает его в свою копию цепи.
 ./Siliqua --connect 127.0.0.1 9000 nodeB.dat
 
-# 5. Смотрим адреса и баланс узла A (награда за блок 1 ушла на его кошелёк)
+# 5. Смотрим адреса и баланс узла A (награда за блок 1 ушла на его кошелёк).
 ./Siliqua --address nodeA.dat
 ./Siliqua --address nodeB.dat
 ./Siliqua --balance nodeA.dat
 
-# 6. Узел B слушает порт для приёма транзакции
+# 6. Узел B слушает порт для приёма транзакции.
 ./Siliqua --receive-tx 9001 nodeB.dat &
 
-# 7. Узел A отправляет часть своего баланса на адрес узла B (адрес из шага 5)
+# 7. Узел A отправляет часть своего баланса на адрес узла B (адрес из шага 5).
 ./Siliqua --send 127.0.0.1 9001 nodeA.dat <адрес_узла_B> 100000
 
-# 8. Постоянный демон вместо разовых команд, с известным пиром
+# 8. Постоянный демон вместо разовых команд, с известным пиром.
 ./Siliqua --daemon 9000 nodeA.dat 127.0.0.1:9001
 ```
 
@@ -615,32 +558,89 @@ cp nodeA.dat nodeB.dat
 ## Глава 12: Сборка проекта
 
 ### Зависимости
-- CMake ≥ 3.15, компилятор с поддержкой C++23
-- `libsecp256k1` (`brew install secp256k1` / `apt-get install libsecp256k1-dev`)
-- `libcryptopp` (`brew install cryptopp` / `apt-get install libcrypto++-dev`)
-- На Windows зависимости ожидаются в `Siliqua/libs/` (`libsecp256k1.lib`, `cryptlib.lib`)
+#### Linux (Debian):
+```bash
+sudo apt update
+sudo apt install cmake
+sudo apt install g++-14 gcc-14
 
-### Сборка (Linux / macOS)
+cmake -DCMAKE_CXX_COMPILER=g++-14 ..
+
+cmake --version
+g++-14 --version
+
+apt-get install libsecp256k1-dev
+apt-get install libcrypto++-dev
+```
+Если libsecp256k1-dev не найдется в репозитории дистрибутива, то собрать вручную:
+```bash
+git clone https://github.com/bitcoin-core/secp256k1.git
+cd secp256k1 && ./autogen.sh && ./configure && make -j$(nproc) && sudo make install
+```
+
+#### macOS:
+```zsh
+xcode-select --install
+brew install cmake
+
+cmake --version
+clang++ --version
+
+brew install secp256k1
+brew install cryptopp
+```
+#### Windows:
+Установить MS Visual Studio 2022 с компонентом разработки на C++ под десктопы или
+```powershell
+winget install GitHub.GitLFS
+git lfs install
+git lfs pull    
+
+winget install MSYS2.MSYS2
+# next in the MSYS2 UCRT64 terminal:
+pacman -S mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake
+
+# for Windows libsecp256k1.lib, cryptlib.lib are in Siliqua/libs/
+```
+
+### Сборка
+#### Linux (Debian):
 ```bash
 mkdir -p build && cd build
-cmake ..
-cmake --build . --config Release
+cmake -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . --config Release -j$(nproc)
+
+# builded binary locate in Siliqua/bin/Siliqua 
 ```
-Бинарник появляется в `Siliqua/bin/Siliqua` (`RUNTIME_OUTPUT_DIRECTORY`).
+#### macOS:
+```zsh
+mkdir -p build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . --config Release -j$(sysctl -n hw.ncpu)
+
+# builded binary locate in Siliqua/bin/Siliqua 
+```
+#### Windows:
+*После сборки на Windows обязательно скопируйте libsecp256k1-6.dll в ту же папку, где будет лежать собранный Siliqua.exe.*
+```powershell
+mkdir build; cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . --config Release
+
+# builded binary locate in Siliqua\bin\Siliqua.exe or Siliqua\bin\Release\Siliqua.exe
+```
 
 ### Особенности CMakeLists.txt
+Однопроходные генераторы (Make/Ninja) по умолчанию не оптимизируют, если  не указан build type явно - форсируем Release, чтобы `cmake .. && cmake --build .` сразу давал оптимизированный бинарник.
 ```cmake
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Однопроходные генераторы (Make/Ninja) по умолчанию не оптимизируют, если
-# не указан build type явно - форсируем Release, чтобы `cmake .. && cmake --build .`
-# сразу давал оптимизированный бинарник.
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
 ```
-`-O2` вместо `-O3` на GCC/Clang в Release — сознательный выбор ради совместимости со слабым/старым железом (без автовекторизации под инструкции, которых может не быть на целевом CPU).
+`-O2` вместо `-O3` на GCC/Clang в Release сознательный выбор ради совместимости со слабым или старым железом (без автовекторизации под инструкции, которых может не быть на целевом CPU).
 
 ### Threads
 `network/daemon.h` использует `std::thread`; на Linux это требует `-lpthread`, что решается через `Threads::Threads` вместо ручного флага, специфичного для платформы.

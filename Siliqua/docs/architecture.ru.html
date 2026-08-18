@@ -158,9 +158,8 @@
   <header class="hero">
     <div class="eyebrow">Архитектурная схема · C++23</div>
     <h1 class="wordmark">Siliqua</h1>
-    <p class="tagline">Прототип блокчейна в духе Bitcoin: собственный формат блоков и транзакций,
-      Proof-of-Work с ретаргетом сложности, UTXO-модель со скриптами P2PKH, secp256k1-подписи
-      и бинарный P2P-протокол поверх сырых TCP-сокетов — без единой внешней ноды или блокчейн-фреймворка.</p>
+    <p class="tagline">Siliqua - C++ Bitcoin-like blockchain прототип с реализацией UTXO, Proof-of-Work,
+      P2PKH-скриптов, secp256k1-подписей и бинарного P2P-протокола на чистом C++23.</p>
     <div class="meta-row">
       <span class="chip">core/</span>
       <span class="chip">consensus/</span>
@@ -284,7 +283,7 @@ flowchart TB
   <section>
     <div class="section-head">
       <span class="section-num">02</span>
-      <h2>Рукопожатие и обмен блоком между двумя узлами</h2>
+      <h2>Handshake и обмен блоком между двумя узлами</h2>
     </div>
     <p class="section-note">Тот же цикл запросов, что использует <code>run_connector</code>:
       если полученный блок не продолжает собственный тип цепи, узел не отбрасывает его сразу —
