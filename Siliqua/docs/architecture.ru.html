@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Siliqua — архитектурная схема</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #f3f1ea;
+    --surface: #ffffff;
+    --border: #d8d2c2;
+    --text: #211f1a;
+    --text-dim: #6b6558;
+    --accent: #8a6526;
+    --accent-2: #2a6363;
+    --schematic-bg: #12151b;
+    --schematic-border: #333c4f;
+    --schematic-text-dim: #9aa2b6;
+
+    --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d0f13;
+      --surface: #161920;
+      --border: #2b303c;
+      --text: #e8e6df;
+      --text-dim: #8b90a0;
+      --accent: #cfa966;
+      --accent-2: #5fb3ac;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.55;
+  }
+  .page { max-width: 980px; margin: 0 auto; padding: 4.5rem 1.75rem 5rem; }
+  a { color: var(--accent-2); }
+  :focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  header.hero {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding-bottom: 2.75rem;
+    margin-bottom: 2.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+  }
+  h1.wordmark {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(2.4rem, 5vw, 3.4rem);
+    margin: 0;
+    letter-spacing: 0.01em;
+  }
+  .tagline { font-size: 1.05rem; color: var(--text-dim); max-width: 42rem; margin: 0; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
+  .chip {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    padding: 0.3rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-dim);
+    background: var(--surface);
+  }
+  .lang-note {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    color: var(--text-dim);
+  }
+  .lang-note a { text-decoration: underline; }
+
+  section { margin-bottom: 3.5rem; }
+  .section-head { display: flex; align-items: baseline; gap: 0.75rem; margin-bottom: 1.1rem; }
+  .section-num { font-family: var(--font-mono); color: var(--accent); font-size: 0.85rem; }
+  h2 { font-family: var(--font-display); font-weight: 600; font-size: 1.5rem; margin: 0; }
+  .section-note { color: var(--text-dim); max-width: 62ch; margin: 0 0 1.4rem; }
+
+  .schematic {
+    background: var(--schematic-bg);
+    border: 1px solid var(--schematic-border);
+    border-radius: 14px;
+    padding: 1.6rem;
+    overflow-x: auto;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.2) inset;
+  }
+  .schematic-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--schematic-text-dim);
+    margin-bottom: 0.9rem;
+  }
+  .schematic .mermaid { margin: 0; }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 1.1rem; margin-top: 1rem;
+    font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-dim);
+  }
+  .legend span.swatch {
+    display: inline-block; width: 0.7em; height: 0.7em; border-radius: 3px;
+    margin-right: 0.4em; vertical-align: -0.05em;
+  }
+
+  table.spec { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  table.spec caption {
+    text-align: left; font-family: var(--font-mono); font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.8rem;
+  }
+  table.spec th {
+    text-align: left; font-weight: 600; color: var(--text-dim); font-size: 0.76rem;
+    letter-spacing: 0.04em; text-transform: uppercase; padding: 0.55rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+  }
+  table.spec td { padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  table.spec td:first-child, table.spec th:first-child { padding-left: 0; }
+  table.spec tr:last-child td { border-bottom: none; }
+  .const-name { font-family: var(--font-mono); color: var(--accent); white-space: nowrap; }
+  .const-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .const-file { font-family: var(--font-mono); color: var(--text-dim); font-size: 0.82rem; white-space: nowrap; }
+
+  .layer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.9rem; margin-top: 1.4rem; }
+  .layer-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; }
+  .layer-card .file { font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent-2); margin-bottom: 0.35rem; }
+  .layer-card h3 { font-family: var(--font-body); font-size: 0.98rem; font-weight: 600; margin: 0 0 0.3rem; }
+  .layer-card p { margin: 0; font-size: 0.85rem; color: var(--text-dim); }
+
+  footer.colophon {
+    margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
+    font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-dim);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+  }
+  @media (max-width: 640px) { .page { padding: 3rem 1.1rem 3.5rem; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="hero">
+    <div class="eyebrow">Архитектурная схема · C++23</div>
+    <h1 class="wordmark">Siliqua</h1>
+    <p class="tagline">Прототип блокчейна в духе Bitcoin: собственный формат блоков и транзакций,
+      Proof-of-Work с ретаргетом сложности, UTXO-модель со скриптами P2PKH, secp256k1-подписи
+      и бинарный P2P-протокол поверх сырых TCP-сокетов — без единой внешней ноды или блокчейн-фреймворка.</p>
+    <div class="meta-row">
+      <span class="chip">core/</span>
+      <span class="chip">consensus/</span>
+      <span class="chip">wallet/</span>
+      <span class="chip">crypto/</span>
+      <span class="chip">network/</span>
+      <span class="chip">storage/</span>
+    </div>
+    <p class="lang-note">English version: <a href="architecture.en.html">architecture.en.html</a> · подробный текст: <a href="ARCHITECTURE.ru.md">ARCHITECTURE.ru.md</a></p>
+  </header>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">01</span>
+      <h2>Модульная архитектура узла</h2>
+    </div>
+    <p class="section-note">Точка входа <code>Siliqua.cpp</code> разбирает флаги командной строки и либо выполняет
+      разовую операцию, либо запускает <code>network::Node</code> — постоянно работающий демон
+      с тремя потоками, общей цепью <code>chain_</code> под мьютексом.</p>
+
+    <div class="schematic">
+      <div class="schematic-label">Граф зависимостей и потоков управления</div>
+      <pre class="mermaid">
+flowchart TB
+  CLI["Siliqua.cpp<br/>--seed --listen --connect<br/>--send --receive-tx --daemon<br/>--address --balance"]
+  CLI --> NODE
+
+  subgraph NODE["network::Node — daemon.h"]
+    direction LR
+    ACC["AcceptLoop<br/>принимает пиров"]
+    MINE["MiningLoop<br/>каждые 5с"]
+    POLL["PeerPollLoop<br/>синк известных пиров"]
+  end
+
+  NODE --> CONS & WAL & NET & STORE
+
+  subgraph CONS["Консенсус и ядро цепи"]
+    direction TB
+    POW["consensus::pow<br/>таргет · майнинг · ретаргет"]
+    BLK["core::block<br/>CBlockHeader / CBlock / Merkle"]
+    TX["core::transaction<br/>CTxIn / CTxOut / UtxoSet"]
+    POW --> BLK --> TX
+  end
+
+  subgraph WAL["Кошелёк и подписи"]
+    direction TB
+    W["wallet::Wallet<br/>keypair · адрес · CreateTransaction"]
+    SCR["wallet::script<br/>P2PKH стек-машина"]
+    B58["wallet::base58<br/>Base58Check"]
+    ECD["crypto::ecdsa<br/>secp256k1 · SHA-256 · RIPEMD-160"]
+    W --> SCR --> ECD
+    W --> B58
+  end
+
+  subgraph NET["Сетевой протокол"]
+    direction TB
+    MSG["message.h<br/>SILQ + команда + длина + checksum"]
+    PEER["Peer — RAII-обёртка сокета"]
+    SOCK["socket.h — TCP"]
+    MSG --> PEER --> SOCK
+  end
+
+  subgraph STORE["storage.h — персистентность"]
+    direction LR
+    CH[("chain.dat")]
+    WF[("*.wallet")]
+    MP[("*.mempool")]
+  end
+
+  TX -->|UTXO-проверка входов| STORE
+  SCR -->|scriptSig + scriptPubKey| TX
+      </pre>
+    </div>
+
+    <div class="legend">
+      <span><span class="swatch" style="background:#d1aa5e"></span>граница блока / акцент</span>
+      <span><span class="swatch" style="background:#62b3ad"></span>связь между слоями</span>
+      <span><span class="swatch" style="background:#333c4f"></span>служебная область (subgraph)</span>
+    </div>
+
+    <div class="layer-grid">
+      <div class="layer-card">
+        <div class="file">consensus/pow.h</div>
+        <h3>Proof-of-Work</h3>
+        <p>Компактная сложность → 256-битный таргет, майнинг перебором nNonce, ретаргет каждые
+          5 блоков (цель — 60с), суммарная работа цепи для выбора форка.</p>
+      </div>
+      <div class="layer-card">
+        <div class="file">core/block.h · transaction.h</div>
+        <h3>Блоки и UTXO</h3>
+        <p>Заголовок из 6 полей, double-SHA256 хеш, Merkle Root по транзакциям; UTXO —
+          <code>unordered_map&lt;COutPoint, CTxOut&gt;</code> для O(1)-поиска входов.</p>
+      </div>
+      <div class="layer-card">
+        <div class="file">wallet/script.h</div>
+        <h3>Скрипты P2PKH</h3>
+        <p>Стековая машина на 4 опкодах (DUP, HASH160, EQUALVERIFY, CHECKSIG) — тот же принцип,
+          что и в реальном Bitcoin Script, но только необходимый минимум.</p>
+      </div>
+      <div class="layer-card">
+        <div class="file">wallet/base58.h</div>
+        <h3>Адреса Base58Check</h3>
+        <p>RIPEMD160(SHA256(pubkey)) + версия-байт 0x1E + 4-байтная контрольная сумма —
+          собственный префикс, отличный от настоящего Bitcoin.</p>
+      </div>
+      <div class="layer-card">
+        <div class="file">network/message.h</div>
+        <h3>Кадрирование сообщений</h3>
+        <p>Magic <code>SILQ</code> + команда (12 байт) + длина + 4-байтная checksum
+          (double-SHA256 payload) — защита от чужого и повреждённого трафика.</p>
+      </div>
+      <div class="layer-card">
+        <div class="file">network/daemon.h</div>
+        <h3>Постоянный узел</h3>
+        <p>Три потока вокруг одной цепи под <code>std::mutex</code>: приём пиров, майнинг по
+          таймеру, опрос известных пиров — без внешнего планировщика.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">02</span>
+      <h2>Рукопожатие и обмен блоком между двумя узлами</h2>
+    </div>
+    <p class="section-note">Тот же цикл запросов, что использует <code>run_connector</code>:
+      если полученный блок не продолжает собственный тип цепи, узел не отбрасывает его сразу —
+      запрашивает всю цепь пира и сравнивает суммарную работу (правило Bitcoin: побеждает не
+      самая длинная цепь, а цепь с наибольшей работой).</p>
+
+    <div class="schematic">
+      <div class="schematic-label">network/node.h · run_connector ↔ run_listener</div>
+      <pre class="mermaid">
+sequenceDiagram
+    participant A as Узел A (Connector)
+    participant B as Узел B (Listener)
+    A->>B: VERSION
+    B-->>A: VERSION
+    A->>B: VERACK
+    B-->>A: VERACK
+    B-->>A: INV (хеш нового блока)
+    A->>B: GETDATA (тот же хеш)
+    B-->>A: BLOCK (сериализованный)
+    Note over A: Merkle root · PoW · hashPrevBlock<br/>nBits · суммы входов/выходов
+    alt блок продолжает тип цепи A
+        A->>A: chain.push_back(block)
+    else тип не совпадает — возможен форк
+        A->>B: GETBLOCKS
+        B-->>A: CHAIN (вся цепь целиком)
+        A->>A: validate_full_chain +<br/>сравнение суммарной работы
+    end
+      </pre>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">03</span>
+      <h2>Параметры сети</h2>
+    </div>
+    <p class="section-note">Значения намеренно небольшие — halving за 10 блоков, ретаргет за 5 —
+      чтобы поведение можно было наблюдать за один тестовый прогон, а не за годы.</p>
+
+    <table class="spec">
+      <caption>Экономика и лимиты</caption>
+      <thead>
+        <tr><th>Константа</th><th>Значение</th><th>Смысл</th><th>Файл</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="const-name">INITIAL_REWARD</td><td class="const-val">5 000 000 000</td><td>50 монет — награда за блок 0, до халвинга</td><td class="const-file">network/node.h</td></tr>
+        <tr><td class="const-name">HALVING_INTERVAL</td><td class="const-val">10 блоков</td><td>Награда делится пополам каждые N блоков</td><td class="const-file">network/node.h</td></tr>
+        <tr><td class="const-name">DEFAULT_FEE</td><td class="const-val">1 000 сатоши</td><td>Фиксированная комиссия run_send_tx (без рынка комиссий)</td><td class="const-file">network/node.h</td></tr>
+        <tr><td class="const-name">RETARGET_INTERVAL</td><td class="const-val">5 блоков</td><td>Как часто пересчитывается сложность</td><td class="const-file">network/node.h</td></tr>
+        <tr><td class="const-name">TARGET_TIMESPAN_SECONDS</td><td class="const-val">60 с</td><td>Ожидаемое время на RETARGET_INTERVAL блоков</td><td class="const-file">network/node.h</td></tr>
+        <tr><td class="const-name">MAX_MEMPOOL_SIZE</td><td class="const-val">1000 tx</td><td>Потолок неподтверждённых транзакций в памяти узла</td><td class="const-file">network/node.h</td></tr>
+        <tr><td class="const-name">DUST_THRESHOLD</td><td class="const-val">1000 сатоши</td><td>Сдача меньше этого не выделяется в отдельный UTXO</td><td class="const-file">wallet/wallet.h</td></tr>
+        <tr><td class="const-name">DAEMON_CYCLE_SECONDS</td><td class="const-val">5 с</td><td>Период циклов MiningLoop и PeerPollLoop</td><td class="const-file">network/daemon.h</td></tr>
+        <tr><td class="const-name">ADDRESS_VERSION_BYTE</td><td class="const-val">0x1E</td><td>Собственный префикс адреса (не Bitcoin mainnet)</td><td class="const-file">wallet/base58.h</td></tr>
+        <tr><td class="const-name">MAGIC_BYTES</td><td class="const-val">"SILQ"</td><td>Отличает трафик Siliqua от настоящего Bitcoin P2P</td><td class="const-file">network/message.h</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer class="colophon">
+    <span>Siliqua — прототип блокчейна на C++23</span>
+    <span>Схема составлена по исходному коду репозитория</span>
+  </footer>
+
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    securityLevel: "loose",
+    theme: "base",
+    flowchart: { htmlLabels: true },
+    themeVariables: {
+      background: "transparent",
+      primaryColor: "#232a38",
+      primaryTextColor: "#e9e6dc",
+      primaryBorderColor: "#d1aa5e",
+      lineColor: "#62b3ad",
+      secondaryColor: "#1b202b",
+      tertiaryColor: "#1b202b",
+      clusterBkg: "#1b202b",
+      clusterBorder: "#333c4f",
+      actorBkg: "#232a38",
+      actorBorder: "#d1aa5e",
+      actorTextColor: "#e9e6dc",
+      signalColor: "#62b3ad",
+      signalTextColor: "#e9e6dc",
+      labelBoxBkgColor: "#1b202b",
+      labelBoxBorderColor: "#333c4f",
+      labelTextColor: "#e9e6dc",
+      loopTextColor: "#9aa2b6",
+      noteBkgColor: "#1b202b",
+      noteBorderColor: "#333c4f",
+      noteTextColor: "#9aa2b6",
+      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+      fontSize: "13px"
+    }
+  });
+</script>
+</body>
+</html>

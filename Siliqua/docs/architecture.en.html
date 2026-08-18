@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Siliqua — Architecture Diagram</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #f3f1ea;
+    --surface: #ffffff;
+    --border: #d8d2c2;
+    --text: #211f1a;
+    --text-dim: #6b6558;
+    --accent: #8a6526;
+    --accent-2: #2a6363;
+    --schematic-bg: #12151b;
+    --schematic-border: #333c4f;
+    --schematic-text-dim: #9aa2b6;
+
+    --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d0f13;
+      --surface: #161920;
+      --border: #2b303c;
+      --text: #e8e6df;
+      --text-dim: #8b90a0;
+      --accent: #cfa966;
+      --accent-2: #5fb3ac;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.55;
+  }
+  .page { max-width: 980px; margin: 0 auto; padding: 4.5rem 1.75rem 5rem; }
+  a { color: var(--accent-2); }
+  :focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  header.hero {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding-bottom: 2.75rem;
+    margin-bottom: 2.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+  }
+  h1.wordmark {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(2.4rem, 5vw, 3.4rem);
+    margin: 0;
+    letter-spacing: 0.01em;
+  }
+  .tagline { font-size: 1.05rem; color: var(--text-dim); max-width: 42rem; margin: 0; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
+  .chip {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    padding: 0.3rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-dim);
+    background: var(--surface);
+  }
+  .lang-note {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    color: var(--text-dim);
+  }
+  .lang-note a { text-decoration: underline; }
+
+  section { margin-bottom: 3.5rem; }
+  .section-head { display: flex; align-items: baseline; gap: 0.75rem; margin-bottom: 1.1rem; }
+  .section-num { font-family: var(--font-mono); color: var(--accent); font-size: 0.85rem; }
+  h2 { font-family: var(--font-display); font-weight: 600; font-size: 1.5rem; margin: 0; }
+  .section-note { color: var(--text-dim); max-width: 62ch; margin: 0 0 1.4rem; }
+
+  .schematic {
+    background: var(--schematic-bg);
+    border: 1px solid var(--schematic-border);
+    border-radius: 14px;
+    padding: 1.6rem;
+    overflow-x: auto;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.2) inset;
+  }
+  .schematic-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--schematic-text-dim);
+    margin-bottom: 0.9rem;
+  }
+  .schematic .mermaid { margin: 0; }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 1.1rem; margin-top: 1rem;
+    font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-dim);
+  }
+  .legend span.swatch {
+    display: inline-block; width: 0.7em; height: 0.7em; border-radius: 3px;
+    margin-right: 0.4em; vertical-align: -0.05em;
+  }
+
+  table.spec { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  table.spec caption {
+    text-align: left; font-family: var(--font-mono); font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.8rem;
+  }
+  table.spec th {
+    text-align: left; font-weight: 600; color: var(--text-dim); font-size: 0.76rem;
+    letter-spacing: 0.04em; text-transform: uppercase; padding: 0.55rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+  }
+  table.spec td { padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  table.spec td:first-child, table.spec th:first-child { padding-left: 0; }
+  table.spec tr:last-child td { border-bottom: none; }
+  .const-name { font-family: var(--font-mono); color: var(--accent); white-space: nowrap; }
+  .const-val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .const-file { font-family: var(--font-mono); color: var(--text-dim); font-size: 0.82rem; white-space: nowrap; }
+
+  .layer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.9rem; margin-top: 1.4rem; }
+  .layer-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; }
+  .layer-card .file { font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent-2); margin-bottom: 0.35rem; }
+  .layer-card h3 { font-family: var(--font-body); font-size: 0.98rem; font-weight: 600; margin: 0 0 0.3rem; }
+  .layer-card p { margin: 0; font-size: 0.85rem; color: var(--text-dim); }
+
+  footer.colophon {
+    margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
+    font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-dim);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+  }
+  @media (max-width: 640px) { .page { padding: 3rem 1.1rem 3.5rem; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="hero">
+    <div class="eyebrow">Architecture schematic · C++23</div>
+    <h1 class="wordmark">Siliqua</h1>
+    <p class="tagline">A Bitcoin-style blockchain prototype: a custom block and transaction format,
+      Proof-of-Work with difficulty retargeting, a UTXO model with P2PKH scripts, secp256k1 signatures,
+      and a binary P2P protocol over raw TCP sockets — no external node, no blockchain framework.</p>
+    <div class="meta-row">
+      <span class="chip">core/</span>
+      <span class="chip">consensus/</span>
+      <span class="chip">wallet/</span>
+      <span class="chip">crypto/</span>
+      <span class="chip">network/</span>
+      <span class="chip">storage/</span>
+    </div>
+    <p class="lang-note">Русская версия: <a href="architecture.ru.html">architecture.ru.html</a> · full write-up: <a href="ARCHITECTURE.en.md">ARCHITECTURE.en.md</a></p>
+  </header>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">01</span>
+      <h2>Module architecture of the node</h2>
+    </div>
+    <p class="section-note">The entry point <code>Siliqua.cpp</code> parses command-line flags and either runs
+      a one-shot operation or starts <code>network::Node</code> — a persistently running daemon
+      with three threads sharing one <code>chain_</code> behind a mutex.</p>
+
+    <div class="schematic">
+      <div class="schematic-label">Dependency graph and control-flow threads</div>
+      <pre class="mermaid">
+flowchart TB
+  CLI["Siliqua.cpp<br/>--seed --listen --connect<br/>--send --receive-tx --daemon<br/>--address --balance"]
+  CLI --> NODE
+
+  subgraph NODE["network::Node — daemon.h"]
+    direction LR
+    ACC["AcceptLoop<br/>accepts peers"]
+    MINE["MiningLoop<br/>every 5s"]
+    POLL["PeerPollLoop<br/>syncs known peers"]
+  end
+
+  NODE --> CONS & WAL & NET & STORE
+
+  subgraph CONS["Consensus &amp; chain core"]
+    direction TB
+    POW["consensus::pow<br/>target · mining · retarget"]
+    BLK["core::block<br/>CBlockHeader / CBlock / Merkle"]
+    TX["core::transaction<br/>CTxIn / CTxOut / UtxoSet"]
+    POW --> BLK --> TX
+  end
+
+  subgraph WAL["Wallet &amp; signing"]
+    direction TB
+    W["wallet::Wallet<br/>keypair · address · CreateTransaction"]
+    SCR["wallet::script<br/>P2PKH stack machine"]
+    B58["wallet::base58<br/>Base58Check"]
+    ECD["crypto::ecdsa<br/>secp256k1 · SHA-256 · RIPEMD-160"]
+    W --> SCR --> ECD
+    W --> B58
+  end
+
+  subgraph NET["Network protocol"]
+    direction TB
+    MSG["message.h<br/>SILQ + command + length + checksum"]
+    PEER["Peer — RAII socket wrapper"]
+    SOCK["socket.h — TCP"]
+    MSG --> PEER --> SOCK
+  end
+
+  subgraph STORE["storage.h — persistence"]
+    direction LR
+    CH[("chain.dat")]
+    WF[("*.wallet")]
+    MP[("*.mempool")]
+  end
+
+  TX -->|UTXO lookup on inputs| STORE
+  SCR -->|scriptSig + scriptPubKey| TX
+      </pre>
+    </div>
+
+    <div class="legend">
+      <span><span class="swatch" style="background:#d1aa5e"></span>block border / accent</span>
+      <span><span class="swatch" style="background:#62b3ad"></span>cross-layer link</span>
+      <span><span class="swatch" style="background:#333c4f"></span>service area (subgraph)</span>
+    </div>
+
+    <div class="layer-grid">
+      <div class="layer-card">
+        <div class="file">consensus/pow.h</div>
+        <h3>Proof-of-Work</h3>
+        <p>Compact difficulty → 256-bit target, mining by brute-forcing <code>nNonce</code>, a retarget every
+          5 blocks (60s target), total chain work decides forks.</p>
+      </div>
+      <div class="layer-card">
+        <div class="file">core/block.h · transaction.h</div>
+        <h3>Blocks &amp; UTXO</h3>
+        <p>A 6-field header, double-SHA256 hash, Merkle Root over transactions; UTXO is an
+          <code>unordered_map&lt;COutPoint, CTxOut&gt;</code> for O(1) input lookups.</p>
+      </div>
+      <div class="layer-card">
+        <div class="file">wallet/script.h</div>
+        <h3>P2PKH scripts</h3>
+        <p>A stack machine with 4 opcodes (DUP, HASH160, EQUALVERIFY, CHECKSIG) — the same idea
+          as real Bitcoin Script, just the necessary minimum.</p>
+      </div>
+      <div class="layer-card">
+        <div class="file">wallet/base58.h</div>
+        <h3>Base58Check addresses</h3>
+        <p>RIPEMD160(SHA256(pubkey)) + version byte 0x1E + a 4-byte checksum — its own prefix,
+          distinct from real Bitcoin.</p>
+      </div>
+      <div class="layer-card">
+        <div class="file">network/message.h</div>
+        <h3>Message framing</h3>
+        <p>Magic <code>SILQ</code> + command (12 bytes) + length + a 4-byte checksum
+          (double-SHA256 of the payload) — guards against foreign or corrupted traffic.</p>
+      </div>
+      <div class="layer-card">
+        <div class="file">network/daemon.h</div>
+        <h3>A persistent node</h3>
+        <p>Three threads around one chain under <code>std::mutex</code>: accepting peers, mining
+          on a timer, polling known peers — no external scheduler.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">02</span>
+      <h2>Handshake and block exchange between two nodes</h2>
+    </div>
+    <p class="section-note">The same request cycle <code>run_connector</code> uses: if the
+      received block doesn't extend the node's own tip, it isn't dropped right away — the node
+      requests the peer's whole chain and compares total work (Bitcoin's rule: the winner is the
+      chain with the most work, not the longest one).</p>
+
+    <div class="schematic">
+      <div class="schematic-label">network/node.h · run_connector ↔ run_listener</div>
+      <pre class="mermaid">
+sequenceDiagram
+    participant A as Node A (Connector)
+    participant B as Node B (Listener)
+    A->>B: VERSION
+    B-->>A: VERSION
+    A->>B: VERACK
+    B-->>A: VERACK
+    B-->>A: INV (new block hash)
+    A->>B: GETDATA (same hash)
+    B-->>A: BLOCK (serialized)
+    Note over A: Merkle root · PoW · hashPrevBlock<br/>nBits · input/output sums
+    alt block extends A's own tip
+        A->>A: chain.push_back(block)
+    else tip mismatch — possible fork
+        A->>B: GETBLOCKS
+        B-->>A: CHAIN (the whole chain)
+        A->>A: validate_full_chain +<br/>compare total work
+    end
+      </pre>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">03</span>
+      <h2>Network parameters</h2>
+    </div>
+    <p class="section-note">Values are intentionally small — a halving every 10 blocks, a retarget
+      every 5 — so the behavior can be observed in a single test run rather than over years.</p>
+
+    <table class="spec">
+      <caption>Economics &amp; limits</caption>
+      <thead>
+        <tr><th>Constant</th><th>Value</th><th>Meaning</th><th>File</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="const-name">INITIAL_REWARD</td><td class="const-val">5,000,000,000</td><td>50 coins — the reward for block 0, before halving</td><td class="const-file">network/node.h</td></tr>
+        <tr><td class="const-name">HALVING_INTERVAL</td><td class="const-val">10 blocks</td><td>Reward halves every N blocks</td><td class="const-file">network/node.h</td></tr>
+        <tr><td class="const-name">DEFAULT_FEE</td><td class="const-val">1,000 sat</td><td>Flat fee paid by run_send_tx (no fee market)</td><td class="const-file">network/node.h</td></tr>
+        <tr><td class="const-name">RETARGET_INTERVAL</td><td class="const-val">5 blocks</td><td>How often difficulty is recomputed</td><td class="const-file">network/node.h</td></tr>
+        <tr><td class="const-name">TARGET_TIMESPAN_SECONDS</td><td class="const-val">60 s</td><td>Expected time for RETARGET_INTERVAL blocks</td><td class="const-file">network/node.h</td></tr>
+        <tr><td class="const-name">MAX_MEMPOOL_SIZE</td><td class="const-val">1000 tx</td><td>Cap on unconfirmed transactions held in memory</td><td class="const-file">network/node.h</td></tr>
+        <tr><td class="const-name">DUST_THRESHOLD</td><td class="const-val">1000 sat</td><td>Change below this isn't split into its own UTXO</td><td class="const-file">wallet/wallet.h</td></tr>
+        <tr><td class="const-name">DAEMON_CYCLE_SECONDS</td><td class="const-val">5 s</td><td>Period of the MiningLoop and PeerPollLoop cycles</td><td class="const-file">network/daemon.h</td></tr>
+        <tr><td class="const-name">ADDRESS_VERSION_BYTE</td><td class="const-val">0x1E</td><td>Own address prefix (not Bitcoin mainnet)</td><td class="const-file">wallet/base58.h</td></tr>
+        <tr><td class="const-name">MAGIC_BYTES</td><td class="const-val">"SILQ"</td><td>Marks Siliqua traffic apart from real Bitcoin P2P</td><td class="const-file">network/message.h</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer class="colophon">
+    <span>Siliqua — a blockchain prototype in C++23</span>
+    <span>Diagram compiled from the repository source</span>
+  </footer>
+
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    securityLevel: "loose",
+    theme: "base",
+    flowchart: { htmlLabels: true },
+    themeVariables: {
+      background: "transparent",
+      primaryColor: "#232a38",
+      primaryTextColor: "#e9e6dc",
+      primaryBorderColor: "#d1aa5e",
+      lineColor: "#62b3ad",
+      secondaryColor: "#1b202b",
+      tertiaryColor: "#1b202b",
+      clusterBkg: "#1b202b",
+      clusterBorder: "#333c4f",
+      actorBkg: "#232a38",
+      actorBorder: "#d1aa5e",
+      actorTextColor: "#e9e6dc",
+      signalColor: "#62b3ad",
+      signalTextColor: "#e9e6dc",
+      labelBoxBkgColor: "#1b202b",
+      labelBoxBorderColor: "#333c4f",
+      labelTextColor: "#e9e6dc",
+      loopTextColor: "#9aa2b6",
+      noteBkgColor: "#1b202b",
+      noteBorderColor: "#333c4f",
+      noteTextColor: "#9aa2b6",
+      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+      fontSize: "13px"
+    }
+  });
+</script>
+</body>
+</html>
