@@ -49,7 +49,8 @@ Persistence:<br>
 * the mempool to a file;<br>
 * the wallet (seckey) to a file, restored across runs.<br>
 
-### CLI (see a usage example in [Chapter 11](#chapter-11-cli-commands-and-a-two-node-scenario))
+### CLI Commands
+#### See a usage example in [Chapter 11](#chapter-11-cli-commands-and-a-two-node-scenario).
 ✅ `--seed <path>` - mine a "clean" genesis chain once (just block 0) and save it to a file. The genesis reward goes to a neutral, all-zero address that nobody owns, so every node that copies this file starts from the same mark.<br>
 ✅ `--listen <port> [chain_path]` - mine one new block on top of the current chain, then listen on a TCP port and serve one connecting client (peer): complete the handshake and hand it that new block.<br>
 ✅ `--connect <host> <port> [chain_path]` - connect to a peer (a node running `--listen`), fetch a block from it, and, if it's valid and extends its own chain, append it to chain_path. If the block doesn't extend the local tip, instead of rejecting it the node requests the peer's whole chain and compares total work (the fork-resolution rule).<br>
@@ -521,8 +522,8 @@ Values are intentionally small (a halving every 10 blocks, a retarget every 5): 
 ---
 
 ## Chapter 11: CLI, commands and a two-node scenario
-### Flag reference (`src/Siliqua.cpp`) is listed in the [CLI](#cli-see-a-usage-example-in-chapter-11-cli-commands-and-a-two-node-scenario) section
-### Practical scenario: two nodes, one transfer
+#### Flag reference (`src/Siliqua.cpp`) is listed in the [CLI](#cli-commands) section.
+#### Practical scenario: two nodes, one transfer
 ```bash
 # 1. Node A seeds the genesis chain.
 ./Siliqua --seed nodeA.dat
