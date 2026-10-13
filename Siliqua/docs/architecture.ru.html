@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Siliqua — архитектурная схема</title>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
 <style>
   :root {
     --bg: #f3f1ea;
@@ -111,6 +111,10 @@
     margin-bottom: 0.9rem;
   }
   .schematic .mermaid { margin: 0; }
+  .schematic .mermaid svg { display: block; margin: 0 auto; }
+  /* narrow screens: keep the diagram readable and scroll inside the block instead of shrinking it */
+  .schematic .mermaid.flow svg { min-width: 760px; }
+  .schematic .mermaid.seq svg { min-width: 560px; }
 
   .legend {
     display: flex; flex-wrap: wrap; gap: 1.1rem; margin-top: 1rem;
@@ -168,7 +172,7 @@
       <span class="chip">network/</span>
       <span class="chip">storage/</span>
     </div>
-    <p class="lang-note">English version: <a href="architecture.en.html">architecture.en.html</a> · подробный текст: <a href="ARCHITECTURE.ru.md">ARCHITECTURE.ru.md</a></p>
+    <p class="lang-note">English version: <a href="architecture.en.html">architecture.en.html</a> · подробный текст: <a href="https://github.com/crypt0xCode/Siliqua/blob/master/Siliqua/docs/ARCHITECTURE.ru.md">ARCHITECTURE.ru.md</a></p>
   </header>
 
   <section>
@@ -182,61 +186,54 @@
 
     <div class="schematic">
       <div class="schematic-label">Граф зависимостей и потоков управления</div>
-      <pre class="mermaid">
+      <pre class="mermaid flow">
+%%{init: {"flowchart": {"wrappingWidth": 460}}}%%
 flowchart TB
-  CLI["Siliqua.cpp<br/>--seed --listen --connect<br/>--send --receive-tx --daemon<br/>--address --balance"]
-  CLI --> NODE
+  CLI["Siliqua.cpp — командная строка<br/>--seed · --listen · --connect · --send<br/>--receive-tx · --daemon · --address · --balance"]
+  NODE["network::Node (daemon.h) — одна chain_ под мьютексом<br/>AcceptLoop: принимает пиров<br/>MiningLoop: майнит каждые 5 с<br/>PeerPollLoop: синхронизация с пирами"]
 
-  subgraph NODE["network::Node — daemon.h"]
-    direction LR
-    ACC["AcceptLoop<br/>принимает пиров"]
-    MINE["MiningLoop<br/>каждые 5с"]
-    POLL["PeerPollLoop<br/>синк известных пиров"]
+  subgraph NET["Сетевой протокол"]
+    PEER["Peer<br/>RAII-обёртка сокета"]
+    MSG["message.h<br/>кадр SILQ + checksum"]
+    SOCK["socket.h<br/>TCP"]
+    PEER --> MSG --> SOCK
   end
 
-  NODE --> CONS & WAL & NET & STORE
+  subgraph STORE["Персистентность"]
+    ST["storage.h<br/>сохранение / загрузка"]
+    FILES[("chain.dat<br/>chain.dat.mempool<br/>chain.dat.wallet")]
+    ST --> FILES
+  end
 
   subgraph CONS["Консенсус и ядро цепи"]
-    direction TB
-    POW["consensus::pow<br/>таргет · майнинг · ретаргет"]
-    BLK["core::block<br/>CBlockHeader / CBlock / Merkle"]
-    TX["core::transaction<br/>CTxIn / CTxOut / UtxoSet"]
+    POW["consensus::pow<br/>таргет · ретаргет"]
+    BLK["core::block<br/>заголовок · Merkle"]
+    TX["core::transaction<br/>UTXO-набор"]
     POW --> BLK --> TX
   end
 
   subgraph WAL["Кошелёк и подписи"]
-    direction TB
-    W["wallet::Wallet<br/>keypair · адрес · CreateTransaction"]
-    SCR["wallet::script<br/>P2PKH стек-машина"]
+    W["wallet::Wallet<br/>ключи · адрес"]
+    SCR["wallet::script<br/>P2PKH-машина"]
     B58["wallet::base58<br/>Base58Check"]
-    ECD["crypto::ecdsa<br/>secp256k1 · SHA-256 · RIPEMD-160"]
+    ECD["crypto::ecdsa<br/>secp256k1 · SHA-256"]
     W --> SCR --> ECD
     W --> B58
   end
 
-  subgraph NET["Сетевой протокол"]
-    direction TB
-    MSG["message.h<br/>SILQ + команда + длина + checksum"]
-    PEER["Peer — RAII-обёртка сокета"]
-    SOCK["socket.h — TCP"]
-    MSG --> PEER --> SOCK
-  end
-
-  subgraph STORE["storage.h — персистентность"]
-    direction LR
-    CH[("chain.dat")]
-    WF[("*.wallet")]
-    MP[("*.mempool")]
-  end
-
-  TX -->|UTXO-проверка входов| STORE
-  SCR -->|scriptSig + scriptPubKey| TX
+  CLI --> NODE
+  NODE --> PEER
+  NODE --> ST
+  NODE --> POW
+  NODE --> W
+  ST --> BLK
+  W --> TX
       </pre>
     </div>
 
     <div class="legend">
       <span><span class="swatch" style="background:#d1aa5e"></span>граница блока / акцент</span>
-      <span><span class="swatch" style="background:#62b3ad"></span>связь между слоями</span>
+      <span><span class="swatch" style="background:#62b3ad"></span>стрелка зависимости (A использует B)</span>
       <span><span class="swatch" style="background:#333c4f"></span>служебная область (subgraph)</span>
     </div>
 
@@ -286,16 +283,17 @@ flowchart TB
       <h2>Handshake и обмен блоком между двумя узлами</h2>
     </div>
     <p class="section-note">Тот же цикл запросов, что использует <code>run_connector</code>:
-      если полученный блок не продолжает собственный тип цепи, узел не отбрасывает его сразу —
+      если полученный блок не продолжает собственную верхушку цепи, узел не отбрасывает его сразу —
       запрашивает всю цепь пира и сравнивает суммарную работу (правило Bitcoin: побеждает не
       самая длинная цепь, а цепь с наибольшей работой).</p>
 
     <div class="schematic">
       <div class="schematic-label">network/node.h · run_connector ↔ run_listener</div>
-      <pre class="mermaid">
+      <pre class="mermaid seq">
+%%{init: {"sequence": {"mirrorActors": false, "actorMargin": 180, "width": 190, "boxMargin": 10, "noteMargin": 12, "messageMargin": 34}}}%%
 sequenceDiagram
-    participant A as Узел A (Connector)
-    participant B as Узел B (Listener)
+    participant A as Узел A (connector)
+    participant B as Узел B (listener)
     A->>B: VERSION
     B-->>A: VERSION
     A->>B: VERACK
@@ -303,13 +301,13 @@ sequenceDiagram
     B-->>A: INV (хеш нового блока)
     A->>B: GETDATA (тот же хеш)
     B-->>A: BLOCK (сериализованный)
-    Note over A: Merkle root · PoW · hashPrevBlock<br/>nBits · суммы входов/выходов
-    alt блок продолжает тип цепи A
-        A->>A: chain.push_back(block)
-    else тип не совпадает — возможен форк
+    Note over A,B: Проверки: Merkle root · PoW · hashPrevBlock<br/>nBits · суммы входов и выходов
+    alt блок продолжает верхушку цепи A
+        Note over A,B: A: chain.push_back(block)
+    else верхушка не совпадает — возможен форк
         A->>B: GETBLOCKS
         B-->>A: CHAIN (вся цепь целиком)
-        A->>A: validate_full_chain +<br/>сравнение суммарной работы
+        Note over A,B: A: validate_full_chain<br/>затем сравнение суммарной работы
     end
       </pre>
     </div>

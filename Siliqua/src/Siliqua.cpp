@@ -6,10 +6,138 @@ using namespace proof_of_work;
 using namespace storage;
 using namespace network;
 
-int main(int argc, char* argv[])
-{
-    std::vector<std::string> args(argv + 1, argv + argc);
+namespace {
+    constexpr int EXIT_RUNTIME_ERROR = 1;
+    constexpr int EXIT_USAGE_ERROR = 2;
+    constexpr size_t UNLIMITED = static_cast<size_t>(-1);
 
+    struct CommandSpec {
+        const char* flag;
+        size_t min_args;    // arguments required after the flag
+        size_t max_args;    // UNLIMITED for a variable-length tail
+        const char* usage;
+        const char* summary;
+    };
+
+    constexpr CommandSpec kCommands[] = {
+        { "--seed",       1, 1,         "--seed <chain_path>",                                                 "mine a fresh genesis-only chain and save it" },
+        { "--listen",     1, 2,         "--listen <port> [chain_path]",                                        "mine one block, serve it to one peer" },
+        { "--connect",    2, 3,         "--connect <host> <port> [chain_path]",                                "fetch a block from a peer and append it if valid" },
+        { "--address",    1, 1,         "--address <chain_path>",                                              "print this node's wallet address (Base58Check)" },
+        { "--balance",    1, 1,         "--balance <chain_path>",                                              "print this node's spendable UTXOs and total" },
+        { "--send",       5, 5,         "--send <host> <port> <chain_path> <recipient_address> <amount>",      "sign a payment and send it to a peer's mempool" },
+        { "--receive-tx", 2, 2,         "--receive-tx <port> <chain_path>",                                    "accept one transaction from a peer into the mempool" },
+        { "--daemon",     2, UNLIMITED, "--daemon <port> <chain_path> [host:port ...] [--no-mine]",            "run a persistent node (mines + syncs; --no-mine = follower)" },
+    };
+
+    const CommandSpec* find_command(const std::string& flag) {
+        for (const auto& command : kCommands) {
+            if (flag == command.flag) {
+                return &command;
+            }
+        }
+        return nullptr;
+    }
+
+    void print_usage(FILE* out) {
+        std::println(out, "Siliqua - Bitcoin-like blockchain node.\n");
+        std::println(out, "Usage: Siliqua <command> [arguments]\n");
+        for (const auto& command : kCommands) {
+            std::println(out, "  {:<66} {}", command.usage, command.summary);
+        }
+        std::println(out, "\n  --help, -h                                                         show this help");
+        std::println(out, "\nWithout any arguments the program runs a demonstration mode (hashing, keypair,");
+        std::println(out, "signature, address, sample transactions; writes utxo.dat to the current folder).");
+        std::println(out, "Exit codes: 0 success, 1 runtime error, 2 invalid command line.");
+    }
+
+    // Whole-string parse: "9000x" or "" are rejected, unlike a bare std::stoi.
+    bool parse_port(const std::string& text, uint16_t& port) {
+        try {
+            size_t used = 0;
+            long long value = std::stoll(text, &used);
+            if (used != text.size() || value < 1 || value > 65535) {
+                return false;
+            }
+            port = static_cast<uint16_t>(value);
+            return true;
+        }
+        catch (const std::exception&) {
+            return false;
+        }
+    }
+
+    bool parse_amount(const std::string& text, int64_t& amount) {
+        try {
+            size_t used = 0;
+            long long value = std::stoll(text, &used);
+            if (used != text.size() || value <= 0) {
+                return false;
+            }
+            amount = value;
+            return true;
+        }
+        catch (const std::exception&) {
+            return false;
+        }
+    }
+
+    /* @brief           Validate the command line before anything is executed.
+    *  @param   args    arguments without the program name (must not be empty).
+    *  @return          -1 if the command line is valid and should be run, otherwise the exit code
+    *                   to return (0 for --help, EXIT_USAGE_ERROR after a printed explanation).
+    */
+    int check_arguments(const std::vector<std::string>& args) {
+        const std::string& flag = args[0];
+        if (flag == "--help" || flag == "-h") {
+            print_usage(stdout);
+            return 0;
+        }
+
+        const CommandSpec* spec = find_command(flag);
+        if (spec == nullptr) {
+            std::println(stderr, "Unknown argument '{}'.\n", flag);
+            print_usage(stderr);
+            return EXIT_USAGE_ERROR;
+        }
+
+        size_t given = args.size() - 1;
+        if (given < spec->min_args || given > spec->max_args) {
+            std::println(stderr, "Wrong number of arguments for {}.\nUsage: Siliqua {}", spec->flag, spec->usage);
+            return EXIT_USAGE_ERROR;
+        }
+
+        uint16_t port = 0;
+        auto invalid = [&](const char* what, const std::string& value, const std::string& why = "") {
+            std::println(stderr, "Invalid {} '{}'{}.\nUsage: Siliqua {}", what, value, why.empty() ? "" : ": " + why, spec->usage);
+            return EXIT_USAGE_ERROR;
+        };
+
+        if ((flag == "--listen" || flag == "--receive-tx" || flag == "--daemon") && !parse_port(args[1], port)) {
+            return invalid("port", args[1], "expected a number from 1 to 65535");
+        }
+        if ((flag == "--connect" || flag == "--send") && !parse_port(args[2], port)) {
+            return invalid("port", args[2], "expected a number from 1 to 65535");
+        }
+        if (flag == "--send") {
+            try {
+                wallet::decode_address(args[4]);
+            }
+            catch (const std::exception& e) {
+                return invalid("recipient address", args[4], e.what());
+            }
+            int64_t amount = 0;
+            if (!parse_amount(args[5], amount)) {
+                return invalid("amount", args[5], "expected a positive integer number of satoshi");
+            }
+        }
+        return -1;
+    }
+}
+
+// Runs an already validated command line. An empty command line falls through to the demonstration mode below.
+static int run(const std::vector<std::string>& args)
+{
     // ./Siliqua --seed <path>                        - mine a fresh genesis-only chain and save it.
     // The genesis coinbase pays an all-zero placeholder address (nobody's wallet), so the seed
     // chain stays neutral - every node that copies it starts equally unable to spend it, and
@@ -77,23 +205,30 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    // ./Siliqua --daemon <port> <chain_path> [host:port ...]
+    // ./Siliqua --daemon <port> <chain_path> [host:port ...] [--no-mine]
     //                                                    - run forever: accept any number of
     //                                                      peers, mine and sync with any listed
     //                                                      known peers every few seconds.
+    //                                                      --no-mine: follower, never mines.
     if (args.size() >= 3 && args[0] == "--daemon") {
         uint16_t port = static_cast<uint16_t>(std::stoi(args[1]));
         std::string chain_path = args[2];
         std::vector<network::PeerAddress> peers;
+        bool mine = true;
         for (size_t i = 3; i < args.size(); ++i) {
+            if (args[i] == "--no-mine") {
+                mine = false;
+                continue;
+            }
             size_t colon = args[i].find(':');
-            if (colon == std::string::npos) {
+            uint16_t peer_port = 0;
+            if (colon == std::string::npos || colon == 0 || !parse_port(args[i].substr(colon + 1), peer_port)) {
                 Logger::instance().error("main: Ignoring malformed peer '{}', expected host:port.", args[i]);
                 continue;
             }
-            peers.push_back({ args[i].substr(0, colon), static_cast<uint16_t>(std::stoi(args[i].substr(colon + 1))) });
+            peers.push_back({ args[i].substr(0, colon), peer_port });
         }
-        network::Node node(port, chain_path, peers);
+        network::Node node(port, chain_path, peers, mine);
         node.Run();
     }
 
@@ -101,6 +236,7 @@ int main(int argc, char* argv[])
     const int STD_SIZE = 32;
     const int RIPEMD160_SIZE = 20;
 
+    std::println("No command given: running the demonstration mode (see --help for the node commands).");
     Logger::instance().info("Starting program");
 
     // TODO: in Bitcoin input is serialize tx, not string.
@@ -202,4 +338,27 @@ int main(int argc, char* argv[])
         prefix, utxos.size(), loadedUtxos.size());
 
     return 0;
+}
+
+int main(int argc, char* argv[])
+{
+    std::vector<std::string> args(argv + 1, argv + argc);
+
+    if (!args.empty()) {
+        int status = check_arguments(args);
+        if (status >= 0) {
+            return status;
+        }
+    }
+
+    // Anything thrown by the node code (for example connect_to() failing) used to reach the C++
+    // runtime and abort the process with a core dump; report it and exit with a normal error code.
+    try {
+        return run(args);
+    }
+    catch (const std::exception& e) {
+        Logger::instance().error("main: {}", e.what());
+        std::println(stderr, "Error: {}", e.what());
+        return EXIT_RUNTIME_ERROR;
+    }
 }

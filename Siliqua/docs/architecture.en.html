@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Siliqua — Architecture Diagram</title>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
 <style>
   :root {
     --bg: #f3f1ea;
@@ -111,6 +111,10 @@
     margin-bottom: 0.9rem;
   }
   .schematic .mermaid { margin: 0; }
+  .schematic .mermaid svg { display: block; margin: 0 auto; }
+  /* narrow screens: keep the diagram readable and scroll inside the block instead of shrinking it */
+  .schematic .mermaid.flow svg { min-width: 760px; }
+  .schematic .mermaid.seq svg { min-width: 560px; }
 
   .legend {
     display: flex; flex-wrap: wrap; gap: 1.1rem; margin-top: 1rem;
@@ -168,7 +172,7 @@
       <span class="chip">network/</span>
       <span class="chip">storage/</span>
     </div>
-    <p class="lang-note">Русская версия: <a href="architecture.ru.html">architecture.ru.html</a> · full write-up: <a href="ARCHITECTURE.en.md">ARCHITECTURE.en.md</a></p>
+    <p class="lang-note">Русская версия: <a href="architecture.ru.html">architecture.ru.html</a> · full write-up: <a href="https://github.com/crypt0xCode/Siliqua/blob/master/Siliqua/docs/ARCHITECTURE.en.md">ARCHITECTURE.en.md</a></p>
   </header>
 
   <section>
@@ -182,61 +186,54 @@
 
     <div class="schematic">
       <div class="schematic-label">Dependency graph and control-flow threads</div>
-      <pre class="mermaid">
+      <pre class="mermaid flow">
+%%{init: {"flowchart": {"wrappingWidth": 460}}}%%
 flowchart TB
-  CLI["Siliqua.cpp<br/>--seed --listen --connect<br/>--send --receive-tx --daemon<br/>--address --balance"]
-  CLI --> NODE
+  CLI["Siliqua.cpp — command line<br/>--seed · --listen · --connect · --send<br/>--receive-tx · --daemon · --address · --balance"]
+  NODE["network::Node (daemon.h) — one chain_ under a mutex<br/>AcceptLoop: accepts peers<br/>MiningLoop: mines every 5 s<br/>PeerPollLoop: syncs known peers"]
 
-  subgraph NODE["network::Node — daemon.h"]
-    direction LR
-    ACC["AcceptLoop<br/>accepts peers"]
-    MINE["MiningLoop<br/>every 5s"]
-    POLL["PeerPollLoop<br/>syncs known peers"]
+  subgraph NET["Network protocol"]
+    PEER["Peer<br/>RAII socket wrapper"]
+    MSG["message.h<br/>SILQ frame + checksum"]
+    SOCK["socket.h<br/>TCP"]
+    PEER --> MSG --> SOCK
   end
 
-  NODE --> CONS & WAL & NET & STORE
+  subgraph STORE["Persistence"]
+    ST["storage.h<br/>save / load"]
+    FILES[("chain.dat<br/>chain.dat.mempool<br/>chain.dat.wallet")]
+    ST --> FILES
+  end
 
-  subgraph CONS["Consensus &amp; chain core"]
-    direction TB
-    POW["consensus::pow<br/>target · mining · retarget"]
-    BLK["core::block<br/>CBlockHeader / CBlock / Merkle"]
-    TX["core::transaction<br/>CTxIn / CTxOut / UtxoSet"]
+  subgraph CONS["Consensus and chain core"]
+    POW["consensus::pow<br/>target · retarget"]
+    BLK["core::block<br/>header · Merkle"]
+    TX["core::transaction<br/>UTXO set"]
     POW --> BLK --> TX
   end
 
-  subgraph WAL["Wallet &amp; signing"]
-    direction TB
-    W["wallet::Wallet<br/>keypair · address · CreateTransaction"]
-    SCR["wallet::script<br/>P2PKH stack machine"]
+  subgraph WAL["Wallet and signing"]
+    W["wallet::Wallet<br/>keys · address"]
+    SCR["wallet::script<br/>P2PKH machine"]
     B58["wallet::base58<br/>Base58Check"]
-    ECD["crypto::ecdsa<br/>secp256k1 · SHA-256 · RIPEMD-160"]
+    ECD["crypto::ecdsa<br/>secp256k1 · SHA-256"]
     W --> SCR --> ECD
     W --> B58
   end
 
-  subgraph NET["Network protocol"]
-    direction TB
-    MSG["message.h<br/>SILQ + command + length + checksum"]
-    PEER["Peer — RAII socket wrapper"]
-    SOCK["socket.h — TCP"]
-    MSG --> PEER --> SOCK
-  end
-
-  subgraph STORE["storage.h — persistence"]
-    direction LR
-    CH[("chain.dat")]
-    WF[("*.wallet")]
-    MP[("*.mempool")]
-  end
-
-  TX -->|UTXO lookup on inputs| STORE
-  SCR -->|scriptSig + scriptPubKey| TX
+  CLI --> NODE
+  NODE --> PEER
+  NODE --> ST
+  NODE --> POW
+  NODE --> W
+  ST --> BLK
+  W --> TX
       </pre>
     </div>
 
     <div class="legend">
       <span><span class="swatch" style="background:#d1aa5e"></span>block border / accent</span>
-      <span><span class="swatch" style="background:#62b3ad"></span>cross-layer link</span>
+      <span><span class="swatch" style="background:#62b3ad"></span>dependency arrow (A uses B)</span>
       <span><span class="swatch" style="background:#333c4f"></span>service area (subgraph)</span>
     </div>
 
@@ -292,10 +289,11 @@ flowchart TB
 
     <div class="schematic">
       <div class="schematic-label">network/node.h · run_connector ↔ run_listener</div>
-      <pre class="mermaid">
+      <pre class="mermaid seq">
+%%{init: {"sequence": {"mirrorActors": false, "actorMargin": 180, "width": 190, "boxMargin": 10, "noteMargin": 12, "messageMargin": 34}}}%%
 sequenceDiagram
-    participant A as Node A (Connector)
-    participant B as Node B (Listener)
+    participant A as Node A (connector)
+    participant B as Node B (listener)
     A->>B: VERSION
     B-->>A: VERSION
     A->>B: VERACK
@@ -303,13 +301,13 @@ sequenceDiagram
     B-->>A: INV (new block hash)
     A->>B: GETDATA (same hash)
     B-->>A: BLOCK (serialized)
-    Note over A: Merkle root · PoW · hashPrevBlock<br/>nBits · input/output sums
-    alt block extends A's own tip
-        A->>A: chain.push_back(block)
+    Note over A,B: Checks: Merkle root · PoW · hashPrevBlock<br/>nBits · input/output sums
+    alt block extends A's tip
+        Note over A,B: A: chain.push_back(block)
     else tip mismatch — possible fork
         A->>B: GETBLOCKS
         B-->>A: CHAIN (the whole chain)
-        A->>A: validate_full_chain +<br/>compare total work
+        Note over A,B: A: validate_full_chain<br/>then compare total work
     end
       </pre>
     </div>

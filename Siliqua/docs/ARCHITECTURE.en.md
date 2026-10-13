@@ -1,6 +1,6 @@
 # Blockchain «Siliqua»
 
-*Русская версия: [ARCHITECTURE.ru.md](ARCHITECTURE.ru.md) · interactive HTML diagram: [architecture.en.html](architecture.en.html)*
+*Русская версия: [ARCHITECTURE.ru.md](ARCHITECTURE.ru.md) · interactive HTML diagram: [architecture.en.html](https://crypt0xCode.github.io/Siliqua/architecture.en.html)*
 
 ### Cryptography and addresses
 * Keypair generation based on the secp256k1 library: seckey/pubkey/compressed pubkey.<br>
@@ -41,16 +41,17 @@
 * Accepting and validating peer blocks, extending the chain (try_extend_chain).<br>
 * Fork resolution by total work (try_reorg), not chain length.<br>
 * Multi-peer daemon mode (list of known peers, periodic sync).<br>
+* Follower mode `--no-mine`: a daemon that syncs and accepts transactions but never mines.<br>
 
 ### Storage
 * Binary (de)serialization of the whole chain to a file.<br>
 Persistence:<br>
-* the UTXO set to a file;<br>
+* the UTXO set to a file (`save_utxo_set`/`load_utxo_set`; only the demonstration mode uses them, nodes rebuild the UTXO set from the chain);<br>
 * the mempool to a file;<br>
 * the wallet (seckey) to a file, restored across runs.<br>
 
 ### CLI Commands
-#### See a usage example in [Chapter 11](#chapter-11-cli-commands-and-a-two-node-scenario).
+*See a usage example in [Chapter 11](#chapter-11-cli-commands-and-a-two-node-scenario).*<br>
 ✅ `--seed <path>` - mine a "clean" genesis chain once (just block 0) and save it to a file. The genesis reward goes to a neutral, all-zero address that nobody owns, so every node that copies this file starts from the same mark.<br>
 ✅ `--listen <port> [chain_path]` - mine one new block on top of the current chain, then listen on a TCP port and serve one connecting client (peer): complete the handshake and hand it that new block.<br>
 ✅ `--connect <host> <port> [chain_path]` - connect to a peer (a node running `--listen`), fetch a block from it, and, if it's valid and extends its own chain, append it to chain_path. If the block doesn't extend the local tip, instead of rejecting it the node requests the peer's whole chain and compares total work (the fork-resolution rule).<br>
@@ -58,12 +59,15 @@ Persistence:<br>
 ✅ `--balance <chain_path>` - print a list of its own unspent UTXOs and their total in satoshi (sats).<br>
 ✅ `--send <host> <port> <chain_path> <address> <sum>` - build and sign a transaction spending the node's own UTXOs (plus a flat DEFAULT_FEE), and send it to a peer. The peer drops it into its own mempool.<br>
 ✅ `--receive-tx <port> <chain_path>` - listen on a port, accept exactly one transaction from a peer, check its signature, its UTXOs, and, if valid, add it to its own mempool (the transaction waits for the next `--listen` run to make it into a block).<br>
-✅ `--daemon <port> <chain_path> [host:port]` - start a persistently running node (network::Node). Unlike every command above, it doesn't exit after one peer or one operation. The daemon accepts any number of connections at once, mines blocks on a timer (every 5s), and syncs itself with a list of known peers (effectively has the functionality of every command listed above).<br>
+✅ `--daemon <port> <chain_path> [host:port ...] [--no-mine]` - start a persistently running node (network::Node). Unlike every command above, it doesn't exit after one peer or one operation. The daemon accepts any number of connections at once (transactions sent to it land in its mempool), mines blocks on a timer (every 5s), and syncs itself with a list of known peers by polling them (effectively has the functionality of every command listed above). With `--no-mine` the node is a *follower*: it accepts peers and transactions and syncs, but never mines. Keep exactly one miner in a network - two mining daemons fork away from each other, and a payment that spends coins from the losing fork is rejected.<br>
+
+*Notes:* spdlog debug output is printed to the console together with the result (for `--address` the address is the last line, for `--balance` it is the line `N UTXO(s), M satoshi total.`). `--help` (or `-h`) prints the command list. An unknown flag, a wrong number of arguments, or an invalid port, amount or recipient address makes the binary print an explanation and the usage line of that command and exit with code 2. An exception raised while running (for example `connect()` failing) is reported as `Error: ...` with exit code 1 instead of aborting the process. Only a start without any arguments runs the demonstration mode: it asks for a string, prints its SHA-256 and double SHA-256, generates a keypair, a signature and an address, builds sample transactions and writes `utxo.dat` into the current folder.
 
 ### Build
 * Cross-platform CMake (Windows/Linux/macOS), C++23.<br>
-* secp256k1 and Crypto++ discovery via pkg-config, vcpkg-style.<br>
-* Optimized for weak, old hardware (several tests run under i486 32-bit emulation).
+* secp256k1 and Crypto++ discovery via pkg-config (fallback: find_library/find_path); on Windows they are taken from `Siliqua/libs/`.<br>
+* Optimized for weak, old hardware (-O2 instead of -O3).<br>
+* Integration test scripts: `scripts/multi_node_test.sh` (three-node consensus check) and `scripts/fork_test.sh` (fork resolution by total work).
 
 ---
 
@@ -127,63 +131,57 @@ Based on the repository's commit history:
 
 ### Dependency graph and control-flow threads
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 460}}}%%
 flowchart TB
-  CLI["Siliqua.cpp<br/>--seed --listen --connect<br/>--send --receive-tx --daemon<br/>--address --balance"]
-  CLI --> NODE
+  CLI["Siliqua.cpp — command line<br/>--seed · --listen · --connect · --send<br/>--receive-tx · --daemon · --address · --balance"]
+  NODE["network::Node (daemon.h) — one chain_ under a mutex<br/>AcceptLoop: accepts peers<br/>MiningLoop: mines every 5 s<br/>PeerPollLoop: syncs known peers"]
 
-  subgraph NODE["network::Node — daemon.h"]
-    direction LR
-    ACC["AcceptLoop<br/>accepts peers"]
-    MINE["MiningLoop<br/>every 5s"]
-    POLL["PeerPollLoop<br/>syncs known peers"]
+  subgraph NET["Network protocol"]
+    PEER["Peer<br/>RAII socket wrapper"]
+    MSG["message.h<br/>SILQ frame + checksum"]
+    SOCK["socket.h<br/>TCP"]
+    PEER --> MSG --> SOCK
   end
 
-  NODE --> CONS & WAL & NET & STORE
+  subgraph STORE["Persistence"]
+    ST["storage.h<br/>save / load"]
+    FILES[("chain.dat<br/>chain.dat.mempool<br/>chain.dat.wallet")]
+    ST --> FILES
+  end
 
   subgraph CONS["Consensus and chain core"]
-    direction TB
-    POW["consensus::pow<br/>target · mining · retarget"]
-    BLK["core::block<br/>CBlockHeader / CBlock / Merkle"]
-    TX["core::transaction<br/>CTxIn / CTxOut / UtxoSet"]
+    POW["consensus::pow<br/>target · retarget"]
+    BLK["core::block<br/>header · Merkle"]
+    TX["core::transaction<br/>UTXO set"]
     POW --> BLK --> TX
   end
 
   subgraph WAL["Wallet and signing"]
-    direction TB
-    W["wallet::Wallet<br/>keypair · address · CreateTransaction"]
-    SCR["wallet::script<br/>P2PKH stack machine"]
+    W["wallet::Wallet<br/>keys · address"]
+    SCR["wallet::script<br/>P2PKH machine"]
     B58["wallet::base58<br/>Base58Check"]
-    ECD["crypto::ecdsa<br/>secp256k1 · SHA-256 · RIPEMD-160"]
+    ECD["crypto::ecdsa<br/>secp256k1 · SHA-256"]
     W --> SCR --> ECD
     W --> B58
   end
 
-  subgraph NET["Network protocol"]
-    direction TB
-    MSG["message.h<br/>SILQ + command + length + checksum"]
-    PEER["Peer — RAII socket wrapper"]
-    SOCK["socket.h — TCP"]
-    MSG --> PEER --> SOCK
-  end
-
-  subgraph STORE["storage.h — persistence"]
-    direction LR
-    CH[("chain.dat")]
-    WF[("*.wallet")]
-    MP[("*.mempool")]
-  end
-
-  TX -->|UTXO check on inputs| STORE
-  SCR -->|scriptSig + scriptPubKey| TX
+  CLI --> NODE
+  NODE --> PEER
+  NODE --> ST
+  NODE --> POW
+  NODE --> W
+  ST --> BLK
+  W --> TX
 ```
-**Legend:** nodes - modules, classes in the codebase; solid arrows - direct calls or dependencies; the dashed `-->|label|` arrow - checking (matching) data between layers; the cylinder shape - a file on disk.
+**Legend:** an arrow `A --> B` means "A uses B" (in the code: an `#include` and calls, checked against the headers); a rectangle - a module or class; a cylinder - a file on disk. The consensus and chain core uses none of the other groups.
 
 ### Handshake and block exchange between two nodes
 The same request cycle `run_connector` uses: if the received block doesn't extend the node's own tip, it isn't dropped right away — the node requests the peer's whole chain and compares total work (Bitcoin's rule: the winner is the chain with the most work, not the longest one).
 ```mermaid
+%%{init: {"sequence": {"mirrorActors": false, "actorMargin": 180, "width": 190, "boxMargin": 10, "noteMargin": 12, "messageMargin": 34}}}%%
 sequenceDiagram
-    participant A as Node A (Connector)
-    participant B as Node B (Listener)
+    participant A as Node A (connector)
+    participant B as Node B (listener)
     A->>B: VERSION
     B-->>A: VERSION
     A->>B: VERACK
@@ -191,13 +189,13 @@ sequenceDiagram
     B-->>A: INV (new block hash)
     A->>B: GETDATA (same hash)
     B-->>A: BLOCK (serialized)
-    Note over A: Merkle root · PoW · hashPrevBlock<br/>nBits · input/output sums
-    alt block extends A's own tip
-        A->>A: chain.push_back(block)
+    Note over A,B: Checks: Merkle root · PoW · hashPrevBlock<br/>nBits · input/output sums
+    alt block extends A's tip
+        Note over A,B: A: chain.push_back(block)
     else tip mismatch — possible fork
         A->>B: GETBLOCKS
         B-->>A: CHAIN (the whole chain)
-        A->>A: validate_full_chain +<br/>compare total work
+        Note over A,B: A: validate_full_chain<br/>then compare total work
     end
 ```
 The full table of the economic constants shown on the diagrams is in [Chapter 10](#chapter-10-network-economics-and-limits).
@@ -205,6 +203,7 @@ The full table of the economic constants shown on the diagrams is in [Chapter 10
 ---
 
 ## Chapter 3: Cryptography and addresses
+*Code snippets in Chapters 3-9 are abridged (signatures without bodies, some braces and comments omitted); the full code is in `Siliqua/include/`.*
 
 ### Hash functions and signing (`crypto/ecdsa.h`)
 ```cpp
@@ -293,6 +292,7 @@ inline transaction::UtxoSet build_utxo_set(const std::vector<block::CBlock>& cha
 ```cpp
 // fee (>= 0) if tx is valid; -1 if not.
 inline int64_t validate_and_get_fee(const transaction::Transaction& tx, const transaction::UtxoSet& utxo_set) {
+    if (tx.vin.empty()) return -1;
     int64_t input_total = 0;
     for (size_t i = 0; i < tx.vin.size(); ++i) {
         auto it = utxo_set.find(tx.vin.at(i).prevout);
@@ -442,6 +442,7 @@ public:
     bool Receive(Message& out) const;
 };
 ```
+
 ---
 
 ## Chapter 8: The node — CLI modes and the persistent daemon
@@ -459,8 +460,8 @@ Each function performs exactly one exchange with exactly one peer and exits:
 ```cpp
 class Node {
 public:
-    Node(uint16_t listen_port, const std::string& chain_path, std::vector<PeerAddress> known_peers);
-    [[noreturn]] void Run(); // starts 3 threads and never returns control
+    Node(uint16_t listen_port, const std::string& chain_path, std::vector<PeerAddress> known_peers, bool mine = true);
+    [[noreturn]] void Run(); // starts 3 threads (2 when mine == false) and never returns control
 
 private:
     [[noreturn]] void AcceptLoop();    // accepts peers, each on its own detached thread
@@ -472,8 +473,11 @@ private:
 
     std::mutex mutex_;                 // guards chain_ from races between the three loops
     std::vector<block::CBlock> chain_;
+    bool mine_;                        // false = --no-mine: the MiningLoop thread is never started
 };
 ```
+
+With `--no-mine` (`mine == false`) `Run()` skips the MiningLoop: the node still accepts peers, stores their transactions in its mempool and polls `known_peers_`, but only ever adopts blocks mined by someone else. The daemon *pulls* blocks (PeerPollLoop asks each known peer for its tip and, if that does not extend ours, for the whole chain); a `BLOCK` pushed to it is not accepted, so a new block shows up on a follower within one cycle (about 5 s).
 
 ### Accepting a block and fork resolution
 ```cpp
@@ -494,12 +498,15 @@ The full exchange sequence is shown in the diagram in [Chapter 2](#chapter-2-arc
 | `<chain_path>.mempool` | tx count (varint) + each transaction's `Serialize()` back to back           |
 | `<any>.utxo`           | entry count (varint) + pairs of `COutPoint::Serialize()`+`CTxOut::Serialize()` |
 
+The `.utxo` file is written only by the demonstration mode (`utxo.dat`); `--listen`, `--connect`, `--daemon` and the other modes rebuild the UTXO set from the chain.
+
 ```cpp
 void save_chain(const std::vector<block::CBlock>& chain, const std::string& path);
 std::vector<block::CBlock> load_chain(const std::string& path);
 void save_mempool(const std::vector<transaction::Transaction>& mempool, const std::string& path);
 std::vector<transaction::Transaction> load_mempool(const std::string& path);
 ```
+
 ---
 
 ## Chapter 10: Network economics and limits
@@ -522,8 +529,8 @@ Values are intentionally small (a halving every 10 blocks, a retarget every 5): 
 ---
 
 ## Chapter 11: CLI, commands and a two-node scenario
-#### Flag reference (`src/Siliqua.cpp`) is listed in the [CLI](#cli-commands) section.
-#### Practical scenario: two nodes, one transfer
+### Flag reference (`src/Siliqua.cpp`) is listed in the [CLI](#cli-commands) section.
+### Practical scenario: two nodes, one transfer
 ```bash
 # 1. Node A seeds the genesis chain.
 ./Siliqua --seed nodeA.dat
@@ -551,28 +558,76 @@ cp nodeA.dat nodeB.dat
 # 7. Node A sends part of its balance to node B's address (from step 5).
 ./Siliqua --send 127.0.0.1 9001 nodeA.dat <node_B_address> 100000
 
-# 8. A persistent daemon instead of one-shot commands, with a known peer.
+# 8. A persistent daemon instead of one-shot commands. 127.0.0.1:9001 is an example peer:
+#    the --receive-tx run from step 6 has already exited, so start a node there or omit the peer.
+#    Several machines: see the hub + follower scenario below (--no-mine).
 ./Siliqua --daemon 9000 nodeA.dat 127.0.0.1:9001
 ```
+
+### Practical scenario: two computers over one port (hub + follower)
+A hub (for example a Windows PC with a public IP, here `HUB_IP`) runs the only miner; a follower (for example a Mac) syncs from it and never mines. **Only the hub needs an open inbound port** (here TCP 9000) - the follower only connects out.
+
+Before you start on the hub:
+* allow inbound TCP 9000 in the firewall for the *active* network profile (Private/Public), and forward TCP 9000 from the router to the hub's LAN address; on Windows `libsecp256k1-6.dll` must sit next to `Siliqua.exe`;
+* start the daemon (step 3 below) and check from the follower: `nc -vz -G 5 HUB_IP 9000`. `succeeded` = reachable; `Connection refused` = the packet arrived, nothing is listening; `Operation timed out` = a firewall, the router or the provider (CGNAT) drops it.
+
+```bash
+# 1. Hub: seed the shared genesis chain, then copy ONLY chain.dat to the follower
+#    (never copy *.wallet - every node keeps its own keys). On Windows use .\Siliqua.exe.
+./Siliqua --seed chain.dat
+
+# 2. Both machines: print the wallet address (it is the last line of the output).
+./Siliqua --address chain.dat
+
+# 3. Hub, terminal 1: start the miner and leave it running.
+./Siliqua --daemon 9000 chain.dat
+
+# 4. Follower, terminal 1: start a non-mining node that syncs from the hub.
+./Siliqua --daemon 9000 chain.dat HUB_IP:9000 --no-mine
+
+# 5. Hub, terminal 2 (after ~10 s, once the first blocks are mined): pay the follower 10 coins.
+#    Amounts are in satoshi; the fee of 1000 is added automatically.
+./Siliqua --send 127.0.0.1 9000 chain.dat FOLLOWER_ADDRESS 1000000000
+
+# 6. Follower, terminal 2 (after ~10 s: the hub mines the payment, the follower pulls the block).
+./Siliqua --balance chain.dat
+
+# 7. Follower, terminal 2: pay the hub back; the follower daemon keeps running.
+./Siliqua --send HUB_IP 9000 chain.dat HUB_ADDRESS 300000000
+
+# 8. Both machines after ~10 s: check the balances.
+./Siliqua --balance chain.dat
+```
+The follower ends with `699999000` satoshi (1000000000 - 300000000 - 1000 fee). The hub's balance is its mined rewards minus 1000000000 plus 300000000 plus the 1000 fee it collected as the miner. Stop the daemons with `Ctrl+C`. `scripts/daemon_hub_test.sh` runs this exact flow with both daemons on one machine and checks these numbers.
+
+### The same scenario without daemons (one listener at a time)
+If you prefer to step through every round by hand, only the hub listens on port 9000, and only one command at a time:
+1. Hub: `--listen 9000 chain.dat` (mines a block), then follower: `--connect HUB_IP 9000 chain.dat`.
+2. Payment hub -> follower: on the hub, terminal 1 `--receive-tx 9000 chain.dat`, terminal 2 `--send 127.0.0.1 9000 chain.dat FOLLOWER_ADDRESS 1000000000`; then again `--listen 9000 chain.dat` on the hub and `--connect HUB_IP 9000 chain.dat` on the follower.
+3. Payment follower -> hub: hub `--receive-tx 9000 chain.dat`, follower `--send HUB_IP 9000 chain.dat HUB_ADDRESS 300000000`; then `--listen` on the hub and `--connect` on the follower once more.
+
+Pitfalls of this variant:
+* `--receive-tx` accepts a transaction, `--listen` does not: a `tx` sent to a `--listen` node is dropped with `Unexpected command 'tx'` - and that node has already mined and saved a block, so the hub is now one block ahead of the follower.
+* After every `--listen` the follower must run `--connect`: it fetches exactly one block, and a block that does not link to its tip is rejected. If a round was missed, copy `chain.dat` from the hub again (the follower's `.wallet` is separate and stays untouched).
 
 ---
 
 ## Chapter 12: Building the project
 
 ### Dependencies
+The code uses `<print>` / `std::println` (C++23), so the compiler's standard library has to provide it: verified with Apple clang 17 and 21; with GCC use version 14 or newer (GCC 13 has no `<print>`).
+
 #### Linux (Debian):
 ```bash
 sudo apt update
 sudo apt install cmake
 sudo apt install g++-14 gcc-14
 
-cmake -DCMAKE_CXX_COMPILER=g++-14 ..
-
 cmake --version
 g++-14 --version
 
-apt-get install libsecp256k1-dev
-apt-get install libcrypto++-dev
+sudo apt install libsecp256k1-dev
+sudo apt install libcrypto++-dev
 ```
 If libsecp256k1-dev isn't found in the distribution's repository, build it manually:
 ```bash
@@ -592,17 +647,17 @@ brew install secp256k1
 brew install cryptopp
 ```
 #### Windows:
-Install MS Visual Studio 2022 with the C++ desktop development component, or
+`libsecp256k1.lib` and `cryptlib.lib` in `Siliqua/libs/` are stored in Git LFS, so Git LFS is required (`libsecp256k1-6.dll` is a regular file):
 ```powershell
 winget install GitHub.GitLFS
 git lfs install
-git lfs pull    
-
+git lfs pull
+```
+Then install MS Visual Studio 2022 with the C++ desktop development component, or MSYS2:
+```powershell
 winget install MSYS2.MSYS2
 # next in the MSYS2 UCRT64 terminal:
 pacman -S mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake
-
-# for Windows libsecp256k1.lib, cryptlib.lib are in Siliqua/libs/
 ```
 
 ### Build
@@ -612,7 +667,7 @@ mkdir -p build && cd build
 cmake -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . --config Release -j$(nproc)
 
-# builded binary locate in Siliqua/bin/Siliqua 
+# The built binary is located at Siliqua/bin/Siliqua
 ```
 #### macOS:
 ```zsh
@@ -620,16 +675,16 @@ mkdir -p build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . --config Release -j$(sysctl -n hw.ncpu)
 
-# builded binary locate in Siliqua/bin/Siliqua 
+# The built binary is located at Siliqua/bin/Siliqua
 ```
 #### Windows:
-*After building on Windows, be sure to copy libsecp256k1-6.dll into the same folder as the built Siliqua.exe.*
+*`libsecp256k1-6.dll` has to be in the same folder as `Siliqua.exe`: Windows does not look in `Siliqua/libs/`. The CMake build copies it there automatically after linking; if you run an older build or move the exe, copy the DLL next to it manually.*
 ```powershell
 mkdir build; cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . --config Release
 
-# builded binary locate in Siliqua\bin\Siliqua.exe or Siliqua\bin\Release\Siliqua.exe
+# The built binary is located at Siliqua\bin\Siliqua.exe or Siliqua\bin\Release\Siliqua.exe
 ```
 
 ### CMakeLists.txt highlights
@@ -646,3 +701,13 @@ endif()
 
 ### Threads
 `network/daemon.h` uses `std::thread`; on Linux this requires `-lpthread`, resolved via `Threads::Threads` instead of a platform-specific flag.
+
+### Tests
+The scripts in `Siliqua/scripts/` need a built `bin/Siliqua`; run them from the `Siliqua/` folder. Working files go to `/tmp/siliqua_*` or to the folder given as the first argument:
+```bash
+cd Siliqua
+./scripts/multi_node_test.sh   # A mines, A pays B, B mines the payment, C syncs; B and C chains must be byte-identical
+./scripts/fork_test.sh         # E reorgs onto the heavier branch and does not switch back to the lighter one
+./scripts/daemon_hub_test.sh  # hub (mining daemon) + follower (--no-mine daemon): two payments in both directions, exact balances, the follower mines nothing
+```
+A passing run exits with code 0 and prints `OK: ...` lines. The scripts count blocks from 1 (genesis is #1), so "block #2" in their output is "block 1" in [Chapter 11](#chapter-11-cli-commands-and-a-two-node-scenario).

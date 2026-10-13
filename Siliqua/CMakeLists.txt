@@ -140,3 +140,14 @@ endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin
 )
+
+# libsecp256k1 is linked through an import library, so Windows looks for libsecp256k1-6.dll
+# in the folder of Siliqua.exe at run time (not in libs/). Copy it next to the executable
+# after every build; $<TARGET_FILE_DIR:...> also covers the per-configuration bin/Release/ folder.
+if(WIN32)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${PROJECT_SOURCE_DIR}/libs/libsecp256k1-6.dll"
+                "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+        VERBATIM)
+endif()

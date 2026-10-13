@@ -29,26 +29,39 @@ namespace network {
         *  @param   listen_port     TCP port to accept incoming peers on.
         *  @param   chain_path      this node's persisted chain, wallet and mempool.
         *  @param   known_peers     other daemons to periodically sync with (may be empty).
+        *  @param   mine            false = follower mode (--no-mine): the node still accepts peers
+        *                           and syncs with known_peers, but never mines its own blocks. Use it
+        *                           for every node but one, otherwise the miners fork away from each
+        *                           other and coins from the losing fork disappear.
         */
-        Node(uint16_t listen_port, const std::string& chain_path, std::vector<PeerAddress> known_peers)
-            : listen_port_(listen_port), chain_path_(chain_path), known_peers_(std::move(known_peers)),
+        Node(uint16_t listen_port, const std::string& chain_path, std::vector<PeerAddress> known_peers, bool mine = true)
+            : listen_port_(listen_port), chain_path_(chain_path), known_peers_(std::move(known_peers)), mine_(mine),
               wallet_(load_or_create_wallet(chain_path + ".wallet")) {
             chain_ = load_or_create_chain(chain_path, wallet_.Address());
             storage::save_chain(chain_, chain_path_);
         }
 
-        // Runs forever: accepts incoming peers, mines on a timer, and polls known_peers_ on a
-        // timer. Never returns under normal operation - stop the process to stop the node.
+        // Runs forever: accepts incoming peers, mines on a timer (unless mining is disabled), and
+        // polls known_peers_ on a timer. Never returns under normal operation - stop the process
+        // to stop the node.
         [[noreturn]] void Run() {
-            Logger::instance().info("daemon: Starting on port {}. Address: {}. Chain height: {}. {} known peer(s).",
-                listen_port_, wallet::encode_address(wallet_.Address()), chain_.size(), known_peers_.size());
+            Logger::instance().info("daemon: Starting on port {}. Address: {}. Chain height: {}. {} known peer(s). Mining: {}.",
+                listen_port_, wallet::encode_address(wallet_.Address()), chain_.size(), known_peers_.size(), mine_ ? "on" : "off");
+            if (!mine_ && known_peers_.empty()) {
+                Logger::instance().error("daemon: Mining is off and no peers are listed - this node will never receive new blocks.");
+            }
 
             std::thread accept_thread(&Node::AcceptLoop, this);
-            std::thread mining_thread(&Node::MiningLoop, this);
+            std::thread mining_thread;
+            if (mine_) {
+                mining_thread = std::thread(&Node::MiningLoop, this);
+            }
             std::thread poll_thread(&Node::PeerPollLoop, this);
 
             accept_thread.join();
-            mining_thread.join();
+            if (mining_thread.joinable()) {
+                mining_thread.join();
+            }
             poll_thread.join();
             std::abort(); // unreachable - the loops above never return
         }
@@ -244,6 +257,7 @@ namespace network {
         uint16_t listen_port_;
         std::string chain_path_;
         std::vector<PeerAddress> known_peers_;
+        bool mine_;
         wallet::Wallet wallet_;
 
         std::mutex mutex_; // guards chain_ - AcceptLoop's per-connection threads, MiningLoop and PeerPollLoop all touch it

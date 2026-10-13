@@ -1,6 +1,6 @@
 # Блокчейн «Siliqua»
 
-*English version: [ARCHITECTURE.en.md](ARCHITECTURE.en.md) · интерактивная HTML-схема: [architecture.ru.html](architecture.ru.html)*
+*English version: [ARCHITECTURE.en.md](ARCHITECTURE.en.md) · интерактивная HTML-схема: [architecture.ru.html](https://crypt0xCode.github.io/Siliqua/architecture.ru.html)*
 
 ### Криптография и адреса
 * Генерация keypair на основе библиотеки secp256k1: seckey/pubkey/сжатый pubkey.<br>
@@ -41,16 +41,17 @@
 * Приём и валидация чужих блоков, продолжение цепи (try_extend_chain).<br>
 * Разрешение форков по суммарной работе (try_reorg), а не по длине цепи.<br>
 * Мультипир-режим демона (список известных пиров, периодическая синхронизация).<br>
+* Режим follower `--no-mine`: демон, который синхронизируется и принимает транзакции, но не майнит.<br>
 
 ### Хранилище
 * Бинарная (де)сериализация всей цепи в файл.<br>
 Персистентность:<br>
-* UTXO-сета в файл;<br>
+* UTXO-сета в файл (`save_utxo_set`/`load_utxo_set`; используются только в демонстрационном режиме, узлы пересобирают UTXO-сет из цепи);<br>
 * мемпула в файл;<br>
 * кошелька (seckey) в файл, восстановление между запусками.<br>
 
 ### CLI команды
-#### В [Главе 11](#глава-11-CLI-команды-и-сценарий-из-двух-узлов) представлен пример использования команд.
+*В [Главе 11](#глава-11-cli-команды-и-сценарий-из-двух-узлов) представлен пример использования команд.*<br>
 ✅ `--seed <path>` - единоразово намайнить «пустую» genesis-цепь (только блок 0) и сохранить её в файл. Награда за genesis уходит на нейтральный нулевой адрес, которым никто не владеет, так каждый узел, скопированный этот файл, стартует с одинаковой метки.<br>
 ✅ `--listen <port> [chain_path]` - смайнить один новый блок поверх своей текущей цепи, затем слушать TCP-порт и обслужить одного подключившегося клиента (пира): провести handshake и отдать ему этот новый блок.<br>
 ✅ `--connect <host> <port> [chain_path]` - подключиться к пиру (к узлу, запущенному с --listen), забрать у него блок и, если он валиден и продолжает свою цепь, добавить в chain_path. Если блок не продолжает свой тип, узел вместо отказа запросит у пира всю цепь и сравнит суммарную работу (правило разрешения форков).<br>
@@ -58,12 +59,15 @@
 ✅ `--balance <chain_path>` - напечатать список своих не потраченных UTXO и их сумму в сатоши (sats).<br>
 ✅ `--send <host> <port> <chain_path> <address> <sum>` - собрать и подписать транзакцию, тратящую собственные UTXO узла (плюс фиксированная комиссия DEFAULT_FEE), и отправить её пиру. Пир кладет ее к себе в mempool.<br>
 ✅ `--receive-tx <port> <chain_path>` - слушать порт, принять от пира ровно одну транзакцию, проверить её подпись, UTXO и, если она валидна, добавить в свой mempool (транзакация будет ждать следующего запуска --listen, чтобы попасть в блок).<br>
-✅ `--daemon <port> <chain_path> [host:port]` - запустить постоянно работающий узел (network::Node). В отличие от всех команд выше, он не завершается после одного пира или одной операции. Демон принимает сколько угодно подключений одновременно, майнит блоки по таймеру (раз в 5 сек) и сам синхронизируется со списком известных пиров (фактически имеет функционал всех перечисленных выше команд).<br>
+✅ `--daemon <port> <chain_path> [host:port ...] [--no-mine]` - запустить постоянно работающий узел (network::Node). В отличие от всех команд выше, он не завершается после одного пира или одной операции. Демон принимает сколько угодно подключений одновременно (отправленные ему транзакции попадают в его mempool), майнит блоки по таймеру (раз в 5 сек) и сам синхронизируется со списком известных пиров, опрашивая их (фактически имеет функционал всех перечисленных выше команд). С флагом `--no-mine` узел работает как *follower*: принимает пиров и транзакции и синхронизируется, но никогда не майнит. В сети должен быть ровно один майнер - два майнящих демона расходятся по разным веткам, а платёж, тратящий монеты из проигравшей ветки, отклоняется.<br>
+
+*Примечания:* вывод spdlog (уровень debug) печатается в консоль вместе с результатом (для `--address` адрес - последняя строка, для `--balance` - строка `N UTXO(s), M satoshi total.`). `--help` (или `-h`) печатает список команд. Неизвестный флаг, неверное число аргументов, а также неверный порт, сумма или адрес получателя приводят к сообщению с пояснением и строкой использования этой команды и к коду выхода 2. Исключение во время работы (например, неудачный `connect()`) выводится как `Error: ...` с кодом выхода 1, а не обрывает процесс аварийно. Демонстрационный режим запускается только при старте вообще без аргументов: он спрашивает строку, печатает её SHA-256 и double SHA-256, генерирует keypair, подпись и адрес, строит примеры транзакций и записывает `utxo.dat` в текущую папку.
 
 ### Сборка
 * Кроссплатформенный CMake (Windows/Linux/macOS), C++23.<br>
-* Поиск secp256k1 и Crypto++ через pkg-config, vcpkg-style.<br>
-* Оптимизация под слабое, старое железо (проведено несколько тестов с эмуляцией i486 32-bit).
+* Поиск secp256k1 и Crypto++ через pkg-config (запасной вариант: find_library/find_path), на Windows они берутся из `Siliqua/libs/`.<br>
+* Оптимизация под слабое, старое железо (-O2 вместо -O3).<br>
+* Интеграционные тесты-скрипты: `scripts/multi_node_test.sh` (консенсус трёх узлов) и `scripts/fork_test.sh` (разрешение форков по суммарной работе).
 
 ---
 
@@ -127,63 +131,57 @@ Siliqua — прототип однорангового (P2P) блокчейна
 
 ### Граф зависимостей и потоков управления
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 460}}}%%
 flowchart TB
-  CLI["Siliqua.cpp<br/>--seed --listen --connect<br/>--send --receive-tx --daemon<br/>--address --balance"]
-  CLI --> NODE
+  CLI["Siliqua.cpp — командная строка<br/>--seed · --listen · --connect · --send<br/>--receive-tx · --daemon · --address · --balance"]
+  NODE["network::Node (daemon.h) — одна chain_ под мьютексом<br/>AcceptLoop: принимает пиров<br/>MiningLoop: майнит каждые 5 с<br/>PeerPollLoop: синхронизация с пирами"]
 
-  subgraph NODE["network::Node — daemon.h"]
-    direction LR
-    ACC["AcceptLoop<br/>принимает пиров"]
-    MINE["MiningLoop<br/>каждые 5с"]
-    POLL["PeerPollLoop<br/>синк известных пиров"]
+  subgraph NET["Сетевой протокол"]
+    PEER["Peer<br/>RAII-обёртка сокета"]
+    MSG["message.h<br/>кадр SILQ + checksum"]
+    SOCK["socket.h<br/>TCP"]
+    PEER --> MSG --> SOCK
   end
 
-  NODE --> CONS & WAL & NET & STORE
+  subgraph STORE["Персистентность"]
+    ST["storage.h<br/>сохранение / загрузка"]
+    FILES[("chain.dat<br/>chain.dat.mempool<br/>chain.dat.wallet")]
+    ST --> FILES
+  end
 
   subgraph CONS["Консенсус и ядро цепи"]
-    direction TB
-    POW["consensus::pow<br/>таргет · майнинг · ретаргет"]
-    BLK["core::block<br/>CBlockHeader / CBlock / Merkle"]
-    TX["core::transaction<br/>CTxIn / CTxOut / UtxoSet"]
+    POW["consensus::pow<br/>таргет · ретаргет"]
+    BLK["core::block<br/>заголовок · Merkle"]
+    TX["core::transaction<br/>UTXO-набор"]
     POW --> BLK --> TX
   end
 
   subgraph WAL["Кошелёк и подписи"]
-    direction TB
-    W["wallet::Wallet<br/>keypair · адрес · CreateTransaction"]
-    SCR["wallet::script<br/>P2PKH стек-машина"]
+    W["wallet::Wallet<br/>ключи · адрес"]
+    SCR["wallet::script<br/>P2PKH-машина"]
     B58["wallet::base58<br/>Base58Check"]
-    ECD["crypto::ecdsa<br/>secp256k1 · SHA-256 · RIPEMD-160"]
+    ECD["crypto::ecdsa<br/>secp256k1 · SHA-256"]
     W --> SCR --> ECD
     W --> B58
   end
 
-  subgraph NET["Сетевой протокол"]
-    direction TB
-    MSG["message.h<br/>SILQ + команда + длина + checksum"]
-    PEER["Peer — RAII-обёртка сокета"]
-    SOCK["socket.h — TCP"]
-    MSG --> PEER --> SOCK
-  end
-
-  subgraph STORE["storage.h — персистентность"]
-    direction LR
-    CH[("chain.dat")]
-    WF[("*.wallet")]
-    MP[("*.mempool")]
-  end
-
-  TX -->|UTXO-проверка входов| STORE
-  SCR -->|scriptSig + scriptPubKey| TX
+  CLI --> NODE
+  NODE --> PEER
+  NODE --> ST
+  NODE --> POW
+  NODE --> W
+  ST --> BLK
+  W --> TX
 ```
-**Легенда:** узлы - модули, классы кодовой базы; сплошные стрелки - прямые вызовы или зависимости; пунктирная стрелка `-->|label|` - проверка (сверка) данных между слоями; прямоугольник-цилиндр - файл на диске.
+**Легенда:** стрелка `A --> B` означает «A использует B» (в коде это `#include` и вызовы, сверено по заголовкам); прямоугольник - модуль или класс; цилиндр - файл на диске. Консенсус и ядро цепи не используют ни одну из других групп.
 
 ### Handshake и обмен блоком между двумя узлами
-Тот же цикл запросов, что использует `run_connector`: если полученный блок не продолжает собственный тип цепи, узел не отбрасывает его сразу — запрашивает всю цепь пира и сравнивает суммарную работу (правило Bitcoin: побеждает не самая длинная цепь, а цепь с наибольшей работой).
+Тот же цикл запросов, что использует `run_connector`: если полученный блок не продолжает собственную верхушку цепи, узел не отбрасывает его сразу — запрашивает всю цепь пира и сравнивает суммарную работу (правило Bitcoin: побеждает не самая длинная цепь, а цепь с наибольшей работой).
 ```mermaid
+%%{init: {"sequence": {"mirrorActors": false, "actorMargin": 180, "width": 190, "boxMargin": 10, "noteMargin": 12, "messageMargin": 34}}}%%
 sequenceDiagram
-    participant A as Узел A (Connector)
-    participant B as Узел B (Listener)
+    participant A as Узел A (connector)
+    participant B as Узел B (listener)
     A->>B: VERSION
     B-->>A: VERSION
     A->>B: VERACK
@@ -191,13 +189,13 @@ sequenceDiagram
     B-->>A: INV (хеш нового блока)
     A->>B: GETDATA (тот же хеш)
     B-->>A: BLOCK (сериализованный)
-    Note over A: Merkle root · PoW · hashPrevBlock<br/>nBits · суммы входов/выходов
-    alt блок продолжает тип цепи A
-        A->>A: chain.push_back(block)
-    else тип не совпадает — возможен форк
+    Note over A,B: Проверки: Merkle root · PoW · hashPrevBlock<br/>nBits · суммы входов и выходов
+    alt блок продолжает верхушку цепи A
+        Note over A,B: A: chain.push_back(block)
+    else верхушка не совпадает — возможен форк
         A->>B: GETBLOCKS
         B-->>A: CHAIN (вся цепь целиком)
-        A->>A: validate_full_chain +<br/>сравнение суммарной работы
+        Note over A,B: A: validate_full_chain<br/>затем сравнение суммарной работы
     end
 ```
 Полная таблица экономических констант, показанных на диаграммах, находится в [Главе 10](#глава-10-экономика-и-лимиты-сети).
@@ -205,6 +203,7 @@ sequenceDiagram
 ---
 
 ## Глава 3: Криптография и адреса
+*Фрагменты кода в Главах 3-9 сокращены (сигнатуры без тел, часть скобок и комментариев опущена); полный код - в `Siliqua/include/`.*
 
 ### Хеш-функции и подпись (`crypto/ecdsa.h`)
 ```cpp
@@ -293,6 +292,7 @@ inline transaction::UtxoSet build_utxo_set(const std::vector<block::CBlock>& cha
 ```cpp
 // fee (>= 0), если tx валидна; -1, если нет.
 inline int64_t validate_and_get_fee(const transaction::Transaction& tx, const transaction::UtxoSet& utxo_set) {
+    if (tx.vin.empty()) return -1;
     int64_t input_total = 0;
     for (size_t i = 0; i < tx.vin.size(); ++i) {
         auto it = utxo_set.find(tx.vin.at(i).prevout);
@@ -442,6 +442,7 @@ public:
     bool Receive(Message& out) const;
 };
 ```
+
 ---
 
 ## Глава 8: Узел — CLI-режимы и постоянный демон
@@ -459,8 +460,8 @@ public:
 ```cpp
 class Node {
 public:
-    Node(uint16_t listen_port, const std::string& chain_path, std::vector<PeerAddress> known_peers);
-    [[noreturn]] void Run(); // запускает 3 потока и никогда не возвращает управление
+    Node(uint16_t listen_port, const std::string& chain_path, std::vector<PeerAddress> known_peers, bool mine = true);
+    [[noreturn]] void Run(); // запускает 3 потока (2, если mine == false) и никогда не возвращает управление
 
 private:
     [[noreturn]] void AcceptLoop();    // принимает пиров, каждого — в отдельном detached-потоке
@@ -472,8 +473,11 @@ private:
 
     std::mutex mutex_;                 // защищает chain_ от гонок между тремя циклами
     std::vector<block::CBlock> chain_;
+    bool mine_;                        // false = --no-mine: поток MiningLoop не запускается
 };
 ```
+
+С `--no-mine` (`mine == false`) `Run()` пропускает MiningLoop: узел по-прежнему принимает пиров, складывает их транзакции в mempool и опрашивает `known_peers_`, но принимает только блоки, добытые кем-то другим. Демон блоки *забирает* (PeerPollLoop спрашивает у каждого известного пира его верхушку и, если она не продолжает нашу цепь, всю цепь целиком); присланный ему `BLOCK` не принимается, поэтому новый блок появляется у follower в течение одного цикла (около 5 с).
 
 ### Приём блока и разрешение форка
 ```cpp
@@ -494,12 +498,15 @@ bool validate_full_chain(const std::vector<block::CBlock>& chain); // с нул�
 | `<chain_path>.mempool` | количество tx (varint) + `Serialize()` каждой транзакции подряд             |
 | `<any>.utxo`           | количество записей (varint) + пары `COutPoint::Serialize()`+`CTxOut::Serialize()` |
 
+Файл `.utxo` пишет только демонстрационный режим (`utxo.dat`); `--listen`, `--connect`, `--daemon` и остальные режимы пересобирают UTXO-сет из цепи.
+
 ```cpp
 void save_chain(const std::vector<block::CBlock>& chain, const std::string& path);
 std::vector<block::CBlock> load_chain(const std::string& path);
 void save_mempool(const std::vector<transaction::Transaction>& mempool, const std::string& path);
 std::vector<transaction::Transaction> load_mempool(const std::string& path);
 ```
+
 ---
 
 ## Глава 10: Экономика и лимиты сети
@@ -522,8 +529,8 @@ std::vector<transaction::Transaction> load_mempool(const std::string& path);
 ---
 
 ## Глава 11: CLI, команды и сценарий из двух узлов
-#### Справка по флагам (`src/Siliqua.cpp`) указана в разделе [CLI](#cli-команды).
-#### Практический сценарий: два узла, один перевод
+### Справка по флагам (`src/Siliqua.cpp`) указана в разделе [CLI](#cli-команды).
+### Практический сценарий: два узла, один перевод
 ```bash
 # 1. Узел A сеет genesis-цепь.
 ./Siliqua --seed nodeA.dat
@@ -550,28 +557,76 @@ cp nodeA.dat nodeB.dat
 # 7. Узел A отправляет часть своего баланса на адрес узла B (адрес из шага 5).
 ./Siliqua --send 127.0.0.1 9001 nodeA.dat <адрес_узла_B> 100000
 
-# 8. Постоянный демон вместо разовых команд, с известным пиром.
+# 8. Постоянный демон вместо разовых команд. 127.0.0.1:9001 - пример пира:
+#    --receive-tx из шага 6 уже завершился, поэтому запустите там узел или не указывайте пира.
+#    Несколько машин: см. сценарий «хаб + follower» ниже (--no-mine).
 ./Siliqua --daemon 9000 nodeA.dat 127.0.0.1:9001
 ```
+
+### Практический сценарий: два компьютера через один порт (хаб + follower)
+Хаб (например, ПК с Windows и публичным IP, ниже `HUB_IP`) запускает единственного майнера; follower (например, Mac) синхронизируется с ним и сам не майнит. **Входящий порт нужен только хабу** (здесь TCP 9000) - follower только подключается наружу.
+
+Что сделать на хабе перед началом:
+* разрешить входящий TCP 9000 в фаерволе для *активного* сетевого профиля (Private/Public) и пробросить TCP 9000 на роутере на LAN-адрес хаба; на Windows `libsecp256k1-6.dll` должна лежать рядом с `Siliqua.exe`;
+* запустить демон (шаг 3 ниже) и проверить с follower: `nc -vz -G 5 HUB_IP 9000`. `succeeded` - порт доступен; `Connection refused` - пакет дошёл, но порт никто не слушает; `Operation timed out` - пакет отбрасывает фаервол, роутер или провайдер (CGNAT).
+
+```bash
+# 1. Хаб: сеет общий genesis, затем копирует на follower ТОЛЬКО chain.dat
+#    (файлы *.wallet не копировать никогда - у каждого узла свои ключи). На Windows: .\Siliqua.exe.
+./Siliqua --seed chain.dat
+
+# 2. Обе машины: вывести адрес кошелька (последняя строка вывода).
+./Siliqua --address chain.dat
+
+# 3. Хаб, терминал 1: запустить майнера и оставить работать.
+./Siliqua --daemon 9000 chain.dat
+
+# 4. Follower, терминал 1: запустить немайнящий узел, синхронизирующийся с хабом.
+./Siliqua --daemon 9000 chain.dat HUB_IP:9000 --no-mine
+
+# 5. Хаб, терминал 2 (через ~10 с, когда добыты первые блоки): заплатить follower 10 монет.
+#    Суммы в сатоши; комиссия 1000 добавляется автоматически.
+./Siliqua --send 127.0.0.1 9000 chain.dat FOLLOWER_ADDRESS 1000000000
+
+# 6. Follower, терминал 2 (через ~10 с: хаб майнит платёж, follower забирает блок).
+./Siliqua --balance chain.dat
+
+# 7. Follower, терминал 2: заплатить хабу в ответ; демон follower продолжает работать.
+./Siliqua --send HUB_IP 9000 chain.dat HUB_ADDRESS 300000000
+
+# 8. Обе машины через ~10 с: проверить балансы.
+./Siliqua --balance chain.dat
+```
+У follower в конце будет `699999000` сатоши (1000000000 - 300000000 - 1000 комиссии). Баланс хаба - его награды за добытые блоки минус 1000000000 плюс 300000000 плюс 1000 комиссии, собранной как майнером. Демоны останавливаются через `Ctrl+C`. `scripts/daemon_hub_test.sh` прогоняет именно этот сценарий с двумя демонами на одной машине и проверяет эти числа.
+
+### Тот же сценарий без демонов (один слушатель за раз)
+Если хочется пройти каждый раунд вручную, порт 9000 слушает только хаб и только одна команда за раз:
+1. Хаб: `--listen 9000 chain.dat` (майнит блок), затем follower: `--connect HUB_IP 9000 chain.dat`.
+2. Платёж хаб -> follower: на хабе в терминале 1 `--receive-tx 9000 chain.dat`, в терминале 2 `--send 127.0.0.1 9000 chain.dat FOLLOWER_ADDRESS 1000000000`; затем снова `--listen 9000 chain.dat` на хабе и `--connect HUB_IP 9000 chain.dat` на follower.
+3. Платёж follower -> хаб: хаб `--receive-tx 9000 chain.dat`, follower `--send HUB_IP 9000 chain.dat HUB_ADDRESS 300000000`; затем ещё раз `--listen` на хабе и `--connect` на follower.
+
+Подводные камни этого варианта:
+* `--receive-tx` принимает транзакцию, `--listen` - нет: `tx`, присланная узлу в режиме `--listen`, отбрасывается с `Unexpected command 'tx'`, а этот узел уже успел замайнить и сохранить блок, то есть хаб оказывается на блок впереди follower.
+* После каждого `--listen` follower обязан выполнить `--connect`: он забирает ровно один блок, а блок, не связанный с его верхушкой, отклоняется. Если раунд пропущен, заново скопируйте `chain.dat` с хаба (`.wallet` follower отдельный и остаётся нетронутым).
 
 ---
 
 ## Глава 12: Сборка проекта
 
 ### Зависимости
+Код использует `<print>` / `std::println` (C++23), поэтому стандартная библиотека компилятора должна их поддерживать: проверено на Apple clang 17 и 21; для GCC нужна версия 14 или новее (в GCC 13 нет `<print>`).
+
 #### Linux (Debian):
 ```bash
 sudo apt update
 sudo apt install cmake
 sudo apt install g++-14 gcc-14
 
-cmake -DCMAKE_CXX_COMPILER=g++-14 ..
-
 cmake --version
 g++-14 --version
 
-apt-get install libsecp256k1-dev
-apt-get install libcrypto++-dev
+sudo apt install libsecp256k1-dev
+sudo apt install libcrypto++-dev
 ```
 Если libsecp256k1-dev не найдется в репозитории дистрибутива, то собрать вручную:
 ```bash
@@ -591,17 +646,17 @@ brew install secp256k1
 brew install cryptopp
 ```
 #### Windows:
-Установить MS Visual Studio 2022 с компонентом разработки на C++ под десктопы или
+`libsecp256k1.lib` и `cryptlib.lib` в `Siliqua/libs/` хранятся в Git LFS, поэтому Git LFS обязателен (`libsecp256k1-6.dll` - обычный файл):
 ```powershell
 winget install GitHub.GitLFS
 git lfs install
-git lfs pull    
-
+git lfs pull
+```
+Затем установить MS Visual Studio 2022 с компонентом разработки на C++ под десктопы или MSYS2:
+```powershell
 winget install MSYS2.MSYS2
-# next in the MSYS2 UCRT64 terminal:
+# далее в терминале MSYS2 UCRT64:
 pacman -S mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake
-
-# for Windows libsecp256k1.lib, cryptlib.lib are in Siliqua/libs/
 ```
 
 ### Сборка
@@ -611,7 +666,7 @@ mkdir -p build && cd build
 cmake -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . --config Release -j$(nproc)
 
-# builded binary locate in Siliqua/bin/Siliqua 
+# Собранный бинарник лежит в Siliqua/bin/Siliqua
 ```
 #### macOS:
 ```zsh
@@ -619,16 +674,16 @@ mkdir -p build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . --config Release -j$(sysctl -n hw.ncpu)
 
-# builded binary locate in Siliqua/bin/Siliqua 
+# Собранный бинарник лежит в Siliqua/bin/Siliqua
 ```
 #### Windows:
-*После сборки на Windows обязательно скопируйте libsecp256k1-6.dll в ту же папку, где будет лежать собранный Siliqua.exe.*
+*`libsecp256k1-6.dll` должна лежать в той же папке, что и `Siliqua.exe`: Windows не ищет её в `Siliqua/libs/`. Сборка CMake копирует её туда автоматически после линковки; если вы запускаете старую сборку или перенесли exe, скопируйте DLL рядом с ним вручную.*
 ```powershell
 mkdir build; cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . --config Release
 
-# builded binary locate in Siliqua\bin\Siliqua.exe or Siliqua\bin\Release\Siliqua.exe
+# Собранный бинарник лежит в Siliqua\bin\Siliqua.exe или Siliqua\bin\Release\Siliqua.exe
 ```
 
 ### Особенности CMakeLists.txt
@@ -645,3 +700,13 @@ endif()
 
 ### Threads
 `network/daemon.h` использует `std::thread`; на Linux это требует `-lpthread`, что решается через `Threads::Threads` вместо ручного флага, специфичного для платформы.
+
+### Тесты
+Скриптам из `Siliqua/scripts/` нужен собранный `bin/Siliqua`; запускать из папки `Siliqua/`. Рабочие файлы кладутся в `/tmp/siliqua_*` или в папку из первого аргумента:
+```bash
+cd Siliqua
+./scripts/multi_node_test.sh   # A майнит, A платит B, B майнит платёж, C синхронизируется; цепи B и C должны совпасть побайтно
+./scripts/fork_test.sh         # E переходит на более тяжёлую ветку и не возвращается на более лёгкую
+./scripts/daemon_hub_test.sh  # хаб (майнящий демон) + follower (демон --no-mine): два платежа в обе стороны, точные балансы, follower ничего не майнит
+```
+Успешный прогон завершается кодом 0 и печатает строки `OK: ...`. Скрипты считают блоки с единицы (genesis - это #1), поэтому «block #2» в их выводе - это «блок 1» из [Главы 11](#глава-11-cli-команды-и-сценарий-из-двух-узлов).
