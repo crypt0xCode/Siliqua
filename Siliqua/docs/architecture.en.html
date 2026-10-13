@@ -162,7 +162,7 @@
   <header class="hero">
     <div class="eyebrow">Architecture schematic · C++23</div>
     <h1 class="wordmark">Siliqua</h1>
-    <p class="tagline">Siliqua is the Bitcoin-like blockchain prototype with implementation of UTXO,
+    <p class="tagline">Siliqua is a Bitcoin-like blockchain prototype with an implementation of UTXO,
       Proof-of-Work, P2PKH scripts, secp256k1 signatures, and a binary P2P protocol in plain C++23.</p>
     <div class="meta-row">
       <span class="chip">core/</span>
@@ -335,7 +335,7 @@ sequenceDiagram
         <tr><td class="const-name">MAX_MEMPOOL_SIZE</td><td class="const-val">1000 tx</td><td>Cap on unconfirmed transactions held in memory</td><td class="const-file">network/node.h</td></tr>
         <tr><td class="const-name">DUST_THRESHOLD</td><td class="const-val">1000 sat</td><td>Change below this isn't split into its own UTXO</td><td class="const-file">wallet/wallet.h</td></tr>
         <tr><td class="const-name">DAEMON_CYCLE_SECONDS</td><td class="const-val">5 s</td><td>Period of the MiningLoop and PeerPollLoop cycles</td><td class="const-file">network/daemon.h</td></tr>
-        <tr><td class="const-name">ADDRESS_VERSION_BYTE</td><td class="const-val">0x1E</td><td>Own address prefix (not Bitcoin mainnet)</td><td class="const-file">wallet/base58.h</td></tr>
+        <tr><td class="const-name">ADDRESS_VERSION_BYTE</td><td class="const-val">0x1E</td><td>Custom address prefix (not Bitcoin mainnet)</td><td class="const-file">wallet/base58.h</td></tr>
         <tr><td class="const-name">MAGIC_BYTES</td><td class="const-val">"SILQ"</td><td>Marks Siliqua traffic apart from real Bitcoin P2P</td><td class="const-file">network/message.h</td></tr>
       </tbody>
     </table>

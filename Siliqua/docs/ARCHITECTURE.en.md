@@ -1,4 +1,4 @@
-# Blockchain «Siliqua»
+# Siliqua blockchain
 
 *Русская версия: [ARCHITECTURE.ru.md](ARCHITECTURE.ru.md) · interactive HTML diagram: [architecture.en.html](https://crypt0xCode.github.io/Siliqua/architecture.en.html)*
 
@@ -29,7 +29,7 @@
 * Stack machine for script execution (script::evaluate).<br>
 
 ### P2P network protocol
-* Own binary protocol over TCP (magic bytes "SILQ" from Siliqua).<br>
+* A custom binary protocol over TCP (magic bytes "SILQ" from Siliqua).<br>
 * Message framing: magic + command + length + checksum.<br>
 * Commands: VERSION, VERACK, INV, GETDATA, BLOCK, TX, GETBLOCKS, CHAIN.<br>
 * Cross-platform sockets (Winsock/POSIX) behind one interface.<br>
@@ -52,12 +52,12 @@ Persistence:<br>
 
 ### CLI Commands
 *See a usage example in [Chapter 11](#chapter-11-cli-commands-and-a-two-node-scenario).*<br>
-✅ `--seed <path>` - mine a "clean" genesis chain once (just block 0) and save it to a file. The genesis reward goes to a neutral, all-zero address that nobody owns, so every node that copies this file starts from the same mark.<br>
+✅ `--seed <path>` - mine a "clean" genesis chain once (just block 0) and save it to a file. The genesis reward goes to a neutral, all-zero address that nobody owns, so every node that copies this file starts from the same point.<br>
 ✅ `--listen <port> [chain_path]` - mine one new block on top of the current chain, then listen on a TCP port and serve one connecting client (peer): complete the handshake and hand it that new block.<br>
 ✅ `--connect <host> <port> [chain_path]` - connect to a peer (a node running `--listen`), fetch a block from it, and, if it's valid and extends its own chain, append it to chain_path. If the block doesn't extend the local tip, instead of rejecting it the node requests the peer's whole chain and compares total work (the fork-resolution rule).<br>
 ✅ `--address <chain_path>` - print this node's wallet address in Base58Check form to the console (loads or creates `<chain_path>.wallet`).<br>
 ✅ `--balance <chain_path>` - print a list of its own unspent UTXOs and their total in satoshi (sats).<br>
-✅ `--send <host> <port> <chain_path> <address> <sum>` - build and sign a transaction spending the node's own UTXOs (plus a flat DEFAULT_FEE), and send it to a peer. The peer drops it into its own mempool.<br>
+✅ `--send <host> <port> <chain_path> <recipient_address> <amount>` - build and sign a transaction spending the node's own UTXOs (plus a flat DEFAULT_FEE), and send it to a peer. The peer drops it into its own mempool.<br>
 ✅ `--receive-tx <port> <chain_path>` - listen on a port, accept exactly one transaction from a peer, check its signature, its UTXOs, and, if valid, add it to its own mempool (the transaction waits for the next `--listen` run to make it into a block).<br>
 ✅ `--daemon <port> <chain_path> [host:port ...] [--no-mine]` - start a persistently running node (network::Node). Unlike every command above, it doesn't exit after one peer or one operation. The daemon accepts any number of connections at once (transactions sent to it land in its mempool), mines blocks on a timer (every 5s), and syncs itself with a list of known peers by polling them (effectively has the functionality of every command listed above). With `--no-mine` the node is a *follower*: it accepts peers and transactions and syncs, but never mines. Keep exactly one miner in a network - two mining daemons fork away from each other, and a payment that spends coins from the losing fork is rejected.<br>
 
@@ -67,7 +67,7 @@ Persistence:<br>
 * Cross-platform CMake (Windows/Linux/macOS), C++23.<br>
 * secp256k1 and Crypto++ discovery via pkg-config (fallback: find_library/find_path); on Windows they are taken from `Siliqua/libs/`.<br>
 * Optimized for weak, old hardware (-O2 instead of -O3).<br>
-* Integration test scripts: `scripts/multi_node_test.sh` (three-node consensus check) and `scripts/fork_test.sh` (fork resolution by total work).
+* Integration test scripts: `scripts/multi_node_test.sh` (three-node consensus check), `scripts/fork_test.sh` (fork resolution by total work) and `scripts/daemon_hub_test.sh` (hub and follower daemons).
 
 ---
 
@@ -226,7 +226,7 @@ namespace crypto {
 Address = `RIPEMD160(SHA256(compressed_pubkey))`, 20 bytes (`wallet::ADDRESS_SIZE`).
 
 ### Base58Check addresses (`wallet/base58.h`)
-The same algorithm real Bitcoin uses: an alphabet without look-alike characters (0/O, I/l) plus a checksum to catch typos. Its own version byte, so a Siliqua address is never mistaken for a real Bitcoin address:
+The same algorithm real Bitcoin uses: an alphabet without look-alike characters (0/O, I/l) plus a checksum to catch typos. It uses its own version byte, so a Siliqua address is never mistaken for a real Bitcoin address:
 ```cpp
 constexpr uint8_t ADDRESS_VERSION_BYTE = 0x1E;
 
@@ -263,7 +263,7 @@ What gets signed is the transaction hash computed **with every `scriptSig` empty
 | ------------- | ---------------------------------------------------- |------------------------------------------|
 | `COutPoint`   | `txid[32]`, `n`                                       | pointer to a specific output of a past tx |
 | `CTxIn`       | `prevout`, `scriptSig`, `nSequence`                   | an input (spends one UTXO)                |
-| `CTxOut`      | `nValue` (satoshi), `scriptPubKey`                    | an output (new unconfirmed balance)       |
+| `CTxOut`      | `nValue` (satoshi), `scriptPubKey`                    | an output (a new spendable balance)       |
 | `Transaction` | `nVersion`, `vin`, `vout`, `nLockTime`, `tx_hash`     | the whole transaction                     |
 
 ### Hash and coinbase
@@ -521,7 +521,7 @@ std::vector<transaction::Transaction> load_mempool(const std::string& path);
 | `MAX_MEMPOOL_SIZE`             | 1000 tx              | cap on unconfirmed transactions                                | `network/node.h`        |
 | `DUST_THRESHOLD`               | 1000 satoshi          | change below this isn't split into its own UTXO                | `wallet/wallet.h`       |
 | `DAEMON_CYCLE_SECONDS`         | 5 s                  | period of the MiningLoop and PeerPollLoop cycles                | `network/daemon.h`      |
-| `ADDRESS_VERSION_BYTE`         | `0x1E`               | own address prefix (not Bitcoin mainnet)                        | `wallet/base58.h`       |
+| `ADDRESS_VERSION_BYTE`         | `0x1E`               | custom address prefix (not Bitcoin mainnet)                     | `wallet/base58.h`       |
 | `MAGIC_BYTES`                  | `"SILQ"`             | marks Siliqua traffic apart from real Bitcoin P2P                | `network/message.h`     |
 
 Values are intentionally small (a halving every 10 blocks, a retarget every 5): the behavior can be observed in a single test run rather than over years, as in real Bitcoin.
@@ -653,7 +653,7 @@ winget install GitHub.GitLFS
 git lfs install
 git lfs pull
 ```
-Then install MS Visual Studio 2022 with the C++ desktop development component, or MSYS2:
+Then install Visual Studio 2022 with the "Desktop development with C++" workload, or MSYS2:
 ```powershell
 winget install MSYS2.MSYS2
 # next in the MSYS2 UCRT64 terminal:

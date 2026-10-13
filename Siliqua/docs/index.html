@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Siliqua Docs</title>
+<meta name="description" content="Siliqua — a Bitcoin-like blockchain prototype in C++23. Architecture diagrams and documentation.">
+<style>
+  :root {
+    --bg: #f3f1ea;
+    --surface: #ffffff;
+    --border: #d8d2c2;
+    --text: #1f2430;
+    --text-dim: #5d6475;
+    --accent: #8a6a1f;
+    --link: #1d6f69;
+    --font-serif: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151c;
+      --surface: #1b202b;
+      --border: #333c4f;
+      --text: #e9e6dc;
+      --text-dim: #9aa2b6;
+      --accent: #d1aa5e;
+      --link: #62b3ad;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12151c;
+    --surface: #1b202b;
+    --border: #333c4f;
+    --text: #e9e6dc;
+    --text-dim: #9aa2b6;
+    --accent: #d1aa5e;
+    --link: #62b3ad;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-serif);
+    line-height: 1.55;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 16px;
+  }
+  main { width: 100%; max-width: 640px; }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--link);
+    margin: 0 0 0.6rem;
+  }
+  h1 { font-size: clamp(2rem, 6vw, 2.8rem); line-height: 1.1; margin: 0 0 0.8rem; }
+  p.lead { color: var(--text-dim); margin: 0 0 0.5rem; }
+  .cards { margin-top: 1.8rem; display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  a.card {
+    display: block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.1rem 1.2rem;
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  a.card:hover, a.card:focus-visible { border-color: var(--accent); transform: translateY(-1px); outline: none; }
+  .card .lang { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+  .card .title { display: block; font-size: 1.15rem; font-weight: 600; margin: 0.25rem 0 0.2rem; }
+  .card .desc { display: block; color: var(--text-dim); font-size: 0.92rem; }
+  footer { margin-top: 1.8rem; font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-dim); }
+  footer a { color: var(--link); }
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">Siliqua · C++23</p>
+  <h1>Siliqua documentation</h1>
+  <p class="lead">A Bitcoin-like blockchain prototype: UTXO, Proof-of-Work, P2PKH scripts, secp256k1 signatures, and a binary P2P protocol.</p>
+  <p class="lead" lang="ru">Прототип Bitcoin-подобного блокчейна: UTXO, Proof-of-Work, P2PKH-скрипты, подписи secp256k1 и бинарный P2P-протокол.</p>
+
+  <div class="cards">
+    <a class="card" href="architecture.en.html" hreflang="en">
+      <span class="lang">English</span>
+      <span class="title">Architecture diagram</span>
+      <span class="desc">Module graph, handshake sequence, network parameters.</span>
+    </a>
+    <a class="card" href="architecture.ru.html" hreflang="ru" lang="ru">
+      <span class="lang">Русский</span>
+      <span class="title">Архитектурная схема</span>
+      <span class="desc">Граф модулей, обмен блоком между узлами, параметры сети.</span>
+    </a>
+  </div>
+
+  <footer>
+    Full write-up / <span lang="ru">полное описание</span>:
+    <a href="https://github.com/crypt0xCode/Siliqua/blob/master/Siliqua/docs/ARCHITECTURE.en.md">ARCHITECTURE.en.md</a> ·
+    <a href="https://github.com/crypt0xCode/Siliqua/blob/master/Siliqua/docs/ARCHITECTURE.ru.md">ARCHITECTURE.ru.md</a> ·
+    <a href="https://github.com/crypt0xCode/Siliqua">GitHub</a>
+  </footer>
+</main>
+</body>
+</html>

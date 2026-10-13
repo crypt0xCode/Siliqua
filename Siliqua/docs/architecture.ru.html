@@ -162,7 +162,7 @@
   <header class="hero">
     <div class="eyebrow">Архитектурная схема · C++23</div>
     <h1 class="wordmark">Siliqua</h1>
-    <p class="tagline">Siliqua - C++ Bitcoin-like blockchain прототип с реализацией UTXO, Proof-of-Work,
+    <p class="tagline">Siliqua — прототип Bitcoin-подобного блокчейна с реализацией UTXO, Proof-of-Work,
       P2PKH-скриптов, secp256k1-подписей и бинарного P2P-протокола на чистом C++23.</p>
     <div class="meta-row">
       <span class="chip">core/</span>
@@ -182,7 +182,7 @@
     </div>
     <p class="section-note">Точка входа <code>Siliqua.cpp</code> разбирает флаги командной строки и либо выполняет
       разовую операцию, либо запускает <code>network::Node</code> — постоянно работающий демон
-      с тремя потоками, общей цепью <code>chain_</code> под мьютексом.</p>
+      с тремя потоками и общей цепью <code>chain_</code> под мьютексом.</p>
 
     <div class="schematic">
       <div class="schematic-label">Граф зависимостей и потоков управления</div>
@@ -242,7 +242,7 @@ flowchart TB
         <div class="file">consensus/pow.h</div>
         <h3>Proof-of-Work</h3>
         <p>Компактная сложность → 256-битный таргет, майнинг перебором nNonce, ретаргет каждые
-          5 блоков (цель — 60с), суммарная работа цепи для выбора форка.</p>
+          5 блоков (цель — 60 с), суммарная работа цепи для выбора форка.</p>
       </div>
       <div class="layer-card">
         <div class="file">core/block.h · transaction.h</div>
@@ -259,7 +259,7 @@ flowchart TB
       <div class="layer-card">
         <div class="file">wallet/base58.h</div>
         <h3>Адреса Base58Check</h3>
-        <p>RIPEMD160(SHA256(pubkey)) + версия-байт 0x1E + 4-байтная контрольная сумма —
+        <p>RIPEMD160(SHA256(pubkey)) + байт версии 0x1E + 4-байтная контрольная сумма —
           собственный префикс, отличный от настоящего Bitcoin.</p>
       </div>
       <div class="layer-card">
